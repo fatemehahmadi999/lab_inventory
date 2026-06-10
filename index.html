@@ -244,14 +244,7 @@
   </div>
 </div>
 
-<!-- CONFIRM BANNER -->
-<div class="confirm-banner" id="confirm-banner">
-  <div>
-    <div class="confirm-banner-text">You have unsaved changes</div>
-    <div class="confirm-banner-sub" id="changes-count">0 change(s) pending</div>
-  </div>
-  <button class="btn-confirm" onclick="confirmChanges()">Confirm ✓</button>
-</div>
+<!-- Auto-save: no confirm banner needed -->
 
 <!-- MODAL: ADD PROJECT -->
 <div class="modal-backdrop" id="modal-add-project" style="display:none">
@@ -380,41 +373,73 @@
   </div>
 </div>
 
-<script>
-// Global state — accessible by all onclick= handlers
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── Firebase config ──────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAGYqub8oApnvl3a-QcJ87WFy8BP-gMOuU",
+  authDomain: "lab-inventory-9dddc.firebaseapp.com",
+  projectId: "lab-inventory-9dddc",
+  storageBucket: "lab-inventory-9dddc.firebasestorage.app",
+  messagingSenderId: "780219827911",
+  appId: "1:780219827911:web:5478d206b094761eeb20e2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── Global state ─────────────────────────────────────────────────────────────
 let currentUser = '';
-let pendingChanges = 0;
 let activeMaterialId = null;
 let _confirmCallback = null;
 
-const state = {
-  materials: [],
-  projects: [],
-  tissues: [],
-  log: []
-};
+const state = { materials: [], projects: [], tissues: [], log: [] };
 
-// Load from localStorage
-function loadState() {
-  const saved = localStorage.getItem('lab_inventory_v1');
-  if (saved) {
-    try { Object.assign(state, JSON.parse(saved)); } catch(e) {}
-  }
+// ── Firestore helpers ────────────────────────────────────────────────────────
+async function saveDoc(collName, id, data) {
+  await setDoc(doc(db, collName, id), data);
 }
-function saveState() {
-  localStorage.setItem('lab_inventory_v1', JSON.stringify(state));
+async function removeDoc(collName, id) {
+  await deleteDoc(doc(db, collName, id));
 }
 
-// SCREEN NAVIGATION
+// ── Real-time listeners ──────────────────────────────────────────────────────
+function startListeners() {
+  onSnapshot(collection(db, 'materials'), snap => {
+    state.materials = snap.docs.map(d => d.data());
+    renderMaterials();
+    renderProjects();
+  });
+  onSnapshot(collection(db, 'projects'), snap => {
+    state.projects = snap.docs.map(d => d.data());
+    renderProjects();
+  });
+  onSnapshot(collection(db, 'tissues'), snap => {
+    state.tissues = snap.docs.map(d => d.data());
+    renderTissues();
+  });
+  onSnapshot(collection(db, 'log'), snap => {
+    state.log = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
+  });
+}
+
+// ── Change log ───────────────────────────────────────────────────────────────
+async function markChange(desc) {
+  const entry = { ts: Date.now(), tsStr: new Date().toLocaleString(), user: currentUser, desc };
+  await saveDoc('log', entry.ts + '', entry);
+  showToast('Saved ✓');
+}
+
+// ── Screen / nav ─────────────────────────────────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-
-const ACCESS_CODE = 'labaccess2024';
-
-function checkPassword() {
+const ACCESS_CODE = 'wj2026';
+window.checkPassword = function() {
   const val = document.getElementById('password-input').value;
   if (val === ACCESS_CODE) {
     showScreen('screen-user');
@@ -424,52 +449,39 @@ function checkPassword() {
     document.getElementById('password-input').value = '';
     document.getElementById('password-input').focus();
   }
-}
+};
 
-function proceedFromUser() {
+window.proceedFromUser = function() {
   const name = document.getElementById('username-input').value.trim();
   if (!name) { document.getElementById('username-input').focus(); return; }
   currentUser = name;
   const parts = name.split(' ');
-  const initials = parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+  const initials = parts.length >= 2 ? (parts[0][0]+parts[1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
   document.getElementById('user-avatar').textContent = initials;
   document.getElementById('user-display').textContent = name;
   showScreen('screen-main');
-  renderAll();
-}
+  startListeners();
+};
 
-// TABS
-function switchTab(name) {
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+window.switchTab = function(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   const idx = ['projects','materials','tissues'].indexOf(name);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
-}
+};
 
-// MODALS
-function openModal(id) {
+// ── Modals ───────────────────────────────────────────────────────────────────
+window.openModal = function(id) {
   if (id === 'modal-add-project') populateMaterialCheckboxes();
   document.getElementById(id).style.display = 'flex';
-}
-function closeModal(id) {
+};
+window.closeModal = function(id) {
   document.getElementById(id).style.display = 'none';
-}
-// PENDING CHANGES
-function markChange(desc) {
-  pendingChanges++;
-  state.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, desc });
-  document.getElementById('changes-count').textContent = pendingChanges + ' change(s) pending — confirm to save';
-  document.getElementById('confirm-banner').classList.add('visible');
-  saveState();
-}
-function confirmChanges() {
-  pendingChanges = 0;
-  document.getElementById('confirm-banner').classList.remove('visible');
-  document.getElementById('changes-count').textContent = '0 change(s) pending';
-  saveState();
-  showToast('Changes confirmed and saved');
-}
+};
+
+// ── Toast ────────────────────────────────────────────────────────────────────
 function showToast(msg) {
   const t = document.createElement('div');
   t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;z-index:200;pointer-events:none;';
@@ -478,7 +490,7 @@ function showToast(msg) {
   setTimeout(() => t.remove(), 2200);
 }
 
-// ADD PROJECT
+// ── Add project ───────────────────────────────────────────────────────────────
 function populateMaterialCheckboxes() {
   const wrap = document.getElementById('proj-material-checkboxes');
   if (state.materials.length === 0) {
@@ -492,32 +504,24 @@ function populateMaterialCheckboxes() {
     </label>`
   ).join('');
 }
-function addProject() {
+window.addProject = async function() {
   const name = document.getElementById('proj-name').value.trim();
   if (!name) { document.getElementById('proj-name').focus(); return; }
   const checked = [...document.querySelectorAll('#proj-material-checkboxes input:checked')].map(c => c.value);
-  const proj = {
-    id: Date.now() + '',
-    name,
-    desc: document.getElementById('proj-desc').value.trim(),
-    materialIds: checked,
-    created: new Date().toLocaleDateString()
-  };
-  state.projects.push(proj);
+  const proj = { id: Date.now()+'', name, desc: document.getElementById('proj-desc').value.trim(), materialIds: checked, created: new Date().toLocaleDateString() };
+  await saveDoc('projects', proj.id, proj);
   closeModal('modal-add-project');
   document.getElementById('proj-name').value = '';
   document.getElementById('proj-desc').value = '';
-  markChange(`Created project "${name}"`);
-  renderProjects();
-}
+  await markChange(`Created project "${name}"`);
+};
 
-// ADD MATERIAL
-function addMaterial() {
+// ── Add material ──────────────────────────────────────────────────────────────
+window.addMaterial = async function() {
   const name = document.getElementById('mat-name').value.trim();
   if (!name) { document.getElementById('mat-name').focus(); return; }
   const mat = {
-    id: Date.now() + '',
-    name,
+    id: Date.now()+'', name,
     category: document.getElementById('mat-cat').value,
     stock: parseFloat(document.getElementById('mat-stock').value) || 0,
     unit: document.getElementById('mat-unit').value.trim() || 'units',
@@ -526,20 +530,18 @@ function addMaterial() {
     notes: document.getElementById('mat-notes').value.trim(),
     log: []
   };
-  state.materials.push(mat);
+  await saveDoc('materials', mat.id, mat);
   closeModal('modal-add-material');
   ['mat-name','mat-stock','mat-unit','mat-low','mat-loc','mat-notes'].forEach(id => document.getElementById(id).value = '');
-  markChange(`Added material "${name}"`);
-  renderMaterials();
-}
+  await markChange(`Added material "${name}"`);
+};
 
-// ADD TISSUE
-function addTissue() {
+// ── Add tissue ────────────────────────────────────────────────────────────────
+window.addTissue = async function() {
   const name = document.getElementById('tis-name').value.trim();
   if (!name) { document.getElementById('tis-name').focus(); return; }
   const tis = {
-    id: Date.now() + '',
-    name,
+    id: Date.now()+'', name,
     type: document.getElementById('tis-type').value,
     qty: parseInt(document.getElementById('tis-qty').value) || 1,
     freezer: document.getElementById('tis-freezer').value,
@@ -547,15 +549,14 @@ function addTissue() {
     date: document.getElementById('tis-date').value,
     notes: document.getElementById('tis-notes').value.trim()
   };
-  state.tissues.push(tis);
+  await saveDoc('tissues', tis.id, tis);
   closeModal('modal-add-tissue');
-  ['tis-name','tis-qty','tis-shelf','tis-date','tis-notes'].forEach(id => document.getElementById(id).value = '');
-  markChange(`Added sample "${name}"`);
-  renderTissues();
-}
+  ['tis-name','tis-qty','tis-shelf','tis-notes'].forEach(id => document.getElementById(id).value = '');
+  await markChange(`Added sample "${name}"`);
+};
 
-// USE MATERIAL MODAL
-function openUseMaterial(id) {
+// ── Use material modal ────────────────────────────────────────────────────────
+window.openUseMaterial = function(id) {
   activeMaterialId = id;
   const mat = state.materials.find(m => m.id === id);
   if (!mat) return;
@@ -568,22 +569,14 @@ function openUseMaterial(id) {
   document.getElementById('use-mat-action').value = 'consume';
   toggleUseAction();
   openModal('modal-use-material');
-}
-function toggleUseAction() {
+};
+window.toggleUseAction = function() {
   const action = document.getElementById('use-mat-action').value;
-  const amtWrap = document.getElementById('use-mat-amount-wrap');
-  const locWrap = document.getElementById('use-mat-loc-wrap');
-  const lbl = document.getElementById('use-mat-amount-label');
-  if (action === 'relocate') {
-    amtWrap.style.display = 'none';
-    locWrap.style.display = 'block';
-  } else {
-    amtWrap.style.display = 'flex';
-    locWrap.style.display = 'none';
-    lbl.textContent = action === 'consume' ? 'Amount used' : 'Amount to add';
-  }
-}
-function applyMaterialAction() {
+  document.getElementById('use-mat-amount-wrap').style.display = action === 'relocate' ? 'none' : 'flex';
+  document.getElementById('use-mat-loc-wrap').style.display = action === 'relocate' ? 'block' : 'none';
+  document.getElementById('use-mat-amount-label').textContent = action === 'consume' ? 'Amount used' : 'Amount to add';
+};
+window.applyMaterialAction = async function() {
   const mat = state.materials.find(m => m.id === activeMaterialId);
   if (!mat) return;
   const action = document.getElementById('use-mat-action').value;
@@ -591,39 +584,30 @@ function applyMaterialAction() {
   const note = document.getElementById('use-mat-note').value.trim();
   const newLoc = document.getElementById('use-mat-new-loc').value.trim();
   let desc = '';
+  mat.log = mat.log || [];
   if (action === 'consume') {
     if (amount <= 0) { showToast('Enter an amount > 0'); return; }
     const prev = mat.stock;
     mat.stock = Math.max(0, parseFloat((mat.stock - amount).toFixed(4)));
-    desc = `Used ${amount} ${mat.unit} of "${mat.name}" (${prev} → ${mat.stock})${note ? ': ' + note : ''}`;
-    mat.log = mat.log || [];
+    desc = `Used ${amount} ${mat.unit} of "${mat.name}" (${prev} → ${mat.stock})${note ? ': '+note : ''}`;
     mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'consume', amount, note });
   } else if (action === 'add') {
     if (amount <= 0) { showToast('Enter an amount > 0'); return; }
     const prev = mat.stock;
     mat.stock = parseFloat((mat.stock + amount).toFixed(4));
-    desc = `Restocked "${mat.name}" +${amount} ${mat.unit} (${prev} → ${mat.stock})${note ? ': ' + note : ''}`;
-    mat.log = mat.log || [];
+    desc = `Restocked "${mat.name}" +${amount} ${mat.unit} (${prev} → ${mat.stock})${note ? ': '+note : ''}`;
     mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'add', amount, note });
   } else {
     mat.location = newLoc;
     desc = `Moved "${mat.name}" to ${newLoc}`;
-    mat.log = mat.log || [];
     mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'relocate', note: newLoc });
   }
+  await saveDoc('materials', mat.id, mat);
   closeModal('modal-use-material');
-  markChange(desc);
-  renderMaterials();
-  renderProjects();
-}
+  await markChange(desc);
+};
 
-// RENDER
-function renderAll() {
-  renderProjects();
-  renderMaterials();
-  renderTissues();
-}
-
+// ── Render ────────────────────────────────────────────────────────────────────
 function stockBadge(mat) {
   if (mat.stock <= 0) return '<span class="badge badge-out">Out of stock</span>';
   if (mat.stock <= mat.lowAt) return '<span class="badge badge-low">Low</span>';
@@ -632,10 +616,11 @@ function stockBadge(mat) {
 
 function renderMaterials() {
   const el = document.getElementById('materials-list');
+  if (!el) return;
   if (state.materials.length === 0) { el.innerHTML = '<div class="empty">No materials yet. Add your first one above.</div>'; return; }
   el.innerHTML = state.materials.map(m => {
-    const logs = (m.log || []).slice(0, 3).map(l =>
-      `<div class="log-entry"><span>${l.action === 'consume' ? '↓ Used' : l.action === 'add' ? '↑ Added' : '→ Moved'} ${l.action !== 'relocate' ? l.amount + ' ' + m.unit : l.note}${l.note && l.action !== 'relocate' ? ' — ' + l.note : ''}</span><span>${l.ts} · ${l.user}</span></div>`
+    const logs = (m.log || []).slice(0,3).map(l =>
+      `<div class="log-entry"><span>${l.action==='consume'?'↓ Used':l.action==='add'?'↑ Added':'→ Moved'} ${l.action!=='relocate'?l.amount+' '+m.unit:l.note}${l.note&&l.action!=='relocate'?' — '+l.note:''}</span><span>${l.ts} · ${l.user}</span></div>`
     ).join('');
     return `<div class="item-card">
       <div class="item-card-header" onclick="toggleCard('mat-${m.id}')">
@@ -665,6 +650,7 @@ function renderMaterials() {
 
 function renderProjects() {
   const el = document.getElementById('projects-list');
+  if (!el) return;
   if (state.projects.length === 0) { el.innerHTML = '<div class="empty">No projects yet.</div>'; return; }
   el.innerHTML = state.projects.map(p => {
     const mats = state.materials.filter(m => p.materialIds && p.materialIds.includes(m.id));
@@ -672,22 +658,13 @@ function renderProjects() {
       ? '<div style="font-size:13px;color:var(--text3)">No materials assigned.</div>'
       : mats.map(m => `
         <div class="stock-row">
-          <div>
-            <div class="stock-name">${m.name}</div>
-            <div style="font-size:11px;color:var(--text3)">${m.category}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="stock-qty">${m.stock} ${m.unit}</div>
-            ${stockBadge(m)}
-          </div>
+          <div><div class="stock-name">${m.name}</div><div style="font-size:11px;color:var(--text3)">${m.category}</div></div>
+          <div style="text-align:right"><div class="stock-qty">${m.stock} ${m.unit}</div>${stockBadge(m)}</div>
           <button class="btn-sm primary" style="font-size:12px;padding:5px 10px" onclick="openUseMaterial('${m.id}')">Use</button>
         </div>`).join('');
     return `<div class="item-card">
       <div class="item-card-header" onclick="toggleCard('proj-${p.id}')">
-        <div>
-          <div class="item-card-title">${p.name}</div>
-          <div class="item-card-meta">Created ${p.created} · ${mats.length} material(s)</div>
-        </div>
+        <div><div class="item-card-title">${p.name}</div><div class="item-card-meta">Created ${p.created} · ${mats.length} material(s)</div></div>
         <span class="chevron" id="chev-proj-${p.id}">⌄</span>
       </div>
       <div class="item-card-body" id="proj-${p.id}">
@@ -706,17 +683,14 @@ function renderProjects() {
 function renderTissues() {
   const el = document.getElementById('tissues-list');
   const freezerEl = document.getElementById('freezer-view');
+  if (!el) return;
   if (state.tissues.length === 0) {
     el.innerHTML = '';
     freezerEl.innerHTML = '<div class="empty">No samples stored. Add your first sample above.</div>';
     return;
   }
-  // Group by freezer
   const byFreezer = {};
-  state.tissues.forEach(t => {
-    if (!byFreezer[t.freezer]) byFreezer[t.freezer] = [];
-    byFreezer[t.freezer].push(t);
-  });
+  state.tissues.forEach(t => { if (!byFreezer[t.freezer]) byFreezer[t.freezer] = []; byFreezer[t.freezer].push(t); });
   freezerEl.innerHTML = Object.entries(byFreezer).map(([freezer, samples]) => `
     <div class="freezer-section">
       <div class="freezer-label">🧊 ${freezer}</div>
@@ -732,10 +706,7 @@ function renderTissues() {
   el.innerHTML = state.tissues.map(s => `
     <div class="item-card">
       <div class="item-card-header" onclick="toggleCard('tis-${s.id}')">
-        <div>
-          <div class="item-card-title">${s.name}</div>
-          <div class="item-card-meta">${s.type} · ${s.freezer} · ${s.shelf || 'Location TBD'}</div>
-        </div>
+        <div><div class="item-card-title">${s.name}</div><div class="item-card-meta">${s.type} · ${s.freezer} · ${s.shelf || 'Location TBD'}</div></div>
         <div style="display:flex;align-items:center;gap:8px">
           <div style="font-size:15px;font-weight:500;text-align:right">${s.qty} <span style="font-size:12px;color:var(--text3)">aliquot(s)</span></div>
           <span class="chevron" id="chev-tis-${s.id}">⌄</span>
@@ -752,61 +723,63 @@ function renderTissues() {
     </div>`).join('');
 }
 
-function toggleCard(id) {
+window.toggleCard = function(id) {
   const body = document.getElementById(id);
   const chev = document.getElementById('chev-' + id);
   if (!body) return;
   body.classList.toggle('open');
   if (chev) chev.classList.toggle('open');
-}
+};
 
-function showConfirm(msg, onYes) {
+// ── Confirm modal ─────────────────────────────────────────────────────────────
+window.showConfirm = function(msg, onYes) {
   document.getElementById('confirm-msg').textContent = msg;
   _confirmCallback = onYes;
   document.getElementById('modal-confirm').style.display = 'flex';
-}
-function doConfirm(yes) {
+};
+window.doConfirm = function(yes) {
   document.getElementById('modal-confirm').style.display = 'none';
   if (yes && _confirmCallback) _confirmCallback();
   _confirmCallback = null;
-}
+};
 
-function deleteMaterial(id) {
+// ── Delete / decrement ────────────────────────────────────────────────────────
+window.deleteMaterial = function(id) {
   const mat = state.materials.find(m => m.id === id);
-  showConfirm(`Remove "${mat.name}" from inventory?`, () => {
-    state.materials = state.materials.filter(m => m.id !== id);
-    state.projects.forEach(p => { p.materialIds = (p.materialIds || []).filter(mid => mid !== id); });
-    markChange(`Removed material "${mat.name}"`);
-    renderMaterials();
-    renderProjects();
+  showConfirm(`Remove "${mat.name}" from inventory?`, async () => {
+    await removeDoc('materials', id);
+    for (const p of state.projects) {
+      p.materialIds = (p.materialIds || []).filter(mid => mid !== id);
+      await saveDoc('projects', p.id, p);
+    }
+    await markChange(`Removed material "${mat.name}"`);
   });
-}
-function deleteProject(id) {
+};
+window.deleteProject = function(id) {
   const p = state.projects.find(p => p.id === id);
-  showConfirm(`Delete project "${p.name}"?`, () => {
-    state.projects = state.projects.filter(pr => pr.id !== id);
-    markChange(`Deleted project "${p.name}"`);
-    renderProjects();
+  showConfirm(`Delete project "${p.name}"?`, async () => {
+    await removeDoc('projects', id);
+    await markChange(`Deleted project "${p.name}"`);
   });
-}
-function decrementTissue(id) {
+};
+window.decrementTissue = async function(id) {
   const t = state.tissues.find(t => t.id === id);
   if (!t) return;
+  const prev = t.qty;
   t.qty = Math.max(0, t.qty - 1);
-  markChange(`Used 1 aliquot of "${t.name}" (${t.qty + 1} → ${t.qty})`);
-  renderTissues();
-}
-function deleteTissue(id) {
+  await saveDoc('tissues', t.id, t);
+  await markChange(`Used 1 aliquot of "${t.name}" (${prev} → ${t.qty})`);
+};
+window.deleteTissue = function(id) {
   const t = state.tissues.find(t => t.id === id);
-  showConfirm(`Remove "${t.name}" from storage?`, () => {
-    state.tissues = state.tissues.filter(ts => ts.id !== id);
-    markChange(`Removed sample "${t.name}"`);
-    renderTissues();
+  showConfirm(`Remove "${t.name}" from storage?`, async () => {
+    await removeDoc('tissues', id);
+    await markChange(`Removed sample "${t.name}"`);
   });
-}
+};
 
-function editProjectMaterials(projId) {
-  // Reuse add-project modal for editing
+// ── Edit project materials ────────────────────────────────────────────────────
+window.editProjectMaterials = function(projId) {
   const p = state.projects.find(p => p.id === projId);
   populateMaterialCheckboxes();
   document.getElementById('proj-name').value = p.name;
@@ -817,27 +790,24 @@ function editProjectMaterials(projId) {
       if (cb) cb.checked = true;
     });
   }, 50);
-  // Reuse add-project modal with a save override
   document.getElementById('modal-add-project').style.display = 'flex';
-  // Temporarily override save button
   const btn = document.querySelector('#modal-add-project .btn-primary');
   btn.textContent = 'Save changes';
-  btn.onclick = () => {
+  btn.onclick = async () => {
     const checked = [...document.querySelectorAll('#proj-material-checkboxes input:checked')].map(c => c.value);
     p.materialIds = checked;
     p.name = document.getElementById('proj-name').value.trim() || p.name;
     p.desc = document.getElementById('proj-desc').value.trim();
+    await saveDoc('projects', p.id, p);
     closeModal('modal-add-project');
     btn.textContent = 'Create project';
-    btn.onclick = addProject;
-    markChange(`Updated project "${p.name}"`);
-    renderProjects();
+    btn.onclick = window.addProject;
+    await markChange(`Updated project "${p.name}"`);
   };
-}
+};
 
-// INIT — runs after DOM is ready
+// ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  loadState();
   document.getElementById('tis-date').valueAsDate = new Date();
   document.querySelectorAll('.modal-backdrop').forEach(b => {
     b.addEventListener('click', (e) => { if (e.target === b) b.style.display = 'none'; });
