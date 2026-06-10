@@ -163,8 +163,27 @@
 </head>
 <body>
 
+<!-- SCREEN 0: PASSWORD -->
+<div class="screen active" id="screen-password">
+  <div class="login-wrap">
+    <div>
+      <div class="login-logo">Lab Inventory</div>
+      <div class="login-title">Enter access code</div>
+      <div class="login-sub" style="margin-top:6px">This tool is for authorised lab members only.</div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;gap:1rem">
+      <div class="field">
+        <label>Access code</label>
+        <input type="password" id="password-input" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')checkPassword()" />
+        <div id="password-error" style="color:var(--danger);font-size:13px;display:none">Incorrect code. Try again.</div>
+      </div>
+      <button class="btn-primary" onclick="checkPassword()">Enter →</button>
+    </div>
+  </div>
+</div>
+
 <!-- SCREEN 1: USERNAME -->
-<div class="screen active" id="screen-user">
+<div class="screen" id="screen-user">
   <div class="login-wrap">
     <div>
       <div class="login-logo">Lab Inventory</div>
@@ -392,6 +411,20 @@ function showScreen(id) {
   document.getElementById(id).classList.add('active');
 }
 
+
+const ACCESS_CODE = 'wj2026';
+
+function checkPassword() {
+  const val = document.getElementById('password-input').value;
+  if (val === ACCESS_CODE) {
+    showScreen('screen-user');
+    document.getElementById('password-error').style.display = 'none';
+  } else {
+    document.getElementById('password-error').style.display = 'block';
+    document.getElementById('password-input').value = '';
+    document.getElementById('password-input').focus();
+  }
+}
 
 function proceedFromUser() {
   const name = document.getElementById('username-input').value.trim();
