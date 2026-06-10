@@ -105,6 +105,7 @@
   .exp-section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin: 10px 0 4px; }
   .result-box { background: var(--accent-light); border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 13px; color: var(--accent-text); margin-top: 6px; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -456,10 +457,10 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // ── EmailJS config (fill in after setup) ────────────────────────────────────
-const EMAILJS_SERVICE_ID = '';
-const EMAILJS_TEMPLATE_ID = '';
-const EMAILJS_PUBLIC_KEY = '';
-const ALERT_EMAILS = ['fatemeh@yourlab.com']; // ← replace with real emails
+const EMAILJS_SERVICE_ID = 'service_amvww6r';
+const EMAILJS_TEMPLATE_ID = 'template_1dxgs0n';
+const EMAILJS_PUBLIC_KEY = 'AymB0rXDC8fj0AKiW';
+const ALERT_EMAILS = ['fatemehahmadi.x999@gmail.com']; // ← add more emails as needed
 
 // ── State ────────────────────────────────────────────────────────────────────
 let currentUser = '';
