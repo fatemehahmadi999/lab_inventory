@@ -290,7 +290,7 @@
       <div class="field"><label>Name</label><input type="text" id="mat-name" placeholder="e.g. Anti-CD3 antibody" /></div>
       <div class="field-row">
         <div class="field"><label>Category</label>
-          <select id="mat-cat">
+          <select id="mat-cat" onchange="toggleOther('mat-cat','mat-cat-other')">
             <option value="Antibody">Antibody</option>
             <option value="Reagent">Reagent</option>
             <option value="Kit">Kit</option>
@@ -298,6 +298,7 @@
             <option value="Plastics">Plastics</option>
             <option value="Other">Other</option>
           </select>
+          <input type="text" id="mat-cat-other" placeholder="Please specify…" style="display:none;margin-top:6px;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:9px 12px;font-size:15px;color:var(--text);width:100%;outline:none" />
         </div>
         <div class="field"><label>Initial stock</label><input type="number" id="mat-stock" placeholder="e.g. 10" /></div>
       </div>
@@ -328,9 +329,10 @@
       <div class="field"><label>Sample name / ID</label><input type="text" id="tis-name" placeholder="e.g. PDX14-T1 spleen" /></div>
       <div class="field-row">
         <div class="field"><label>Type</label>
-          <select id="tis-type">
+          <select id="tis-type" onchange="toggleOther('tis-type','tis-type-other')">
             <option>Tumor</option><option>Spleen</option><option>Blood</option><option>PBMC</option><option>Bone marrow</option><option>Liver</option><option>Other</option>
           </select>
+          <input type="text" id="tis-type-other" placeholder="Please specify…" style="display:none;margin-top:6px;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:9px 12px;font-size:15px;color:var(--text);width:100%;outline:none" />
         </div>
         <div class="field"><label>Quantity / aliquots</label><input type="number" id="tis-qty" placeholder="e.g. 3" /></div>
       </div>
@@ -701,7 +703,7 @@ window.addMaterial = async function() {
   if (!name) { document.getElementById('mat-name').focus(); return; }
   const mat = {
     id: Date.now()+'', name,
-    category: document.getElementById('mat-cat').value,
+    category: document.getElementById('mat-cat').value === 'Other' ? (document.getElementById('mat-cat-other').value.trim() || 'Other') : document.getElementById('mat-cat').value,
     stock: parseFloat(document.getElementById('mat-stock').value) || 0,
     unit: document.getElementById('mat-unit').value.trim() || 'units',
     lowAt: parseFloat(document.getElementById('mat-low').value) || 1,
@@ -716,6 +718,8 @@ window.addMaterial = async function() {
   await saveDoc('materials', mat.id, mat);
   closeModal('modal-add-material');
   ['mat-name','mat-stock','mat-unit','mat-low','mat-loc','mat-arrival','mat-expiry','mat-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mat-cat-other').style.display = 'none';
+  document.getElementById('mat-cat-other').value = '';
   document.getElementById('mat-drive-links').innerHTML = '';
   await markChange(`Added material "${name}"`);
 };
@@ -823,11 +827,13 @@ window.applyMaterialAction = async function() {
 window.addTissue = async function() {
   const name = document.getElementById('tis-name').value.trim();
   if (!name) { document.getElementById('tis-name').focus(); return; }
-  const tis = { id: Date.now()+'', name, type: document.getElementById('tis-type').value, qty: parseInt(document.getElementById('tis-qty').value)||1, freezer: document.getElementById('tis-freezer').value, shelf: document.getElementById('tis-shelf').value.trim(), date: document.getElementById('tis-date').value, notes: document.getElementById('tis-notes').value.trim(), driveLinks: [] };
+  const tis = { id: Date.now()+'', name, type: document.getElementById('tis-type').value === 'Other' ? (document.getElementById('tis-type-other').value.trim() || 'Other') : document.getElementById('tis-type').value, qty: parseInt(document.getElementById('tis-qty').value)||1, freezer: document.getElementById('tis-freezer').value, shelf: document.getElementById('tis-shelf').value.trim(), date: document.getElementById('tis-date').value, notes: document.getElementById('tis-notes').value.trim(), driveLinks: [] };
   tis.driveLinks = await uploadPendingFiles('tis-drive-links', 'tissues/' + tis.id);
   await saveDoc('tissues', tis.id, tis);
   closeModal('modal-add-tissue');
   ['tis-name','tis-qty','tis-shelf','tis-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('tis-type-other').style.display = 'none';
+  document.getElementById('tis-type-other').value = '';
   document.getElementById('tis-drive-links').innerHTML = '';
   await markChange(`Added sample "${name}"`);
 };
@@ -950,6 +956,14 @@ function populateExpMaterialRows() {
   const wrap = document.getElementById('exp-material-rows');
   wrap.innerHTML = '';
 }
+
+// ── Other field reveal ───────────────────────────────────────────────────────
+window.toggleOther = function(selectId, inputId) {
+  const sel = document.getElementById(selectId);
+  const inp = document.getElementById(inputId);
+  inp.style.display = sel.value === 'Other' ? 'block' : 'none';
+  if (sel.value !== 'Other') inp.value = '';
+};
 
 // ── File upload system ────────────────────────────────────────────────────────
 // pendingFiles: { containerId -> [{ file, name }] }
