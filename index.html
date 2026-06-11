@@ -181,6 +181,7 @@
     <div class="tab" onclick="switchTab('materials')">Materials</div>
     <div class="tab" onclick="switchTab('tissues')">Tissues</div>
     <div class="tab" onclick="switchTab('celllines')">Cell Lines</div>
+    <div class="tab" onclick="switchTab('pdxmodels')">PDX Models</div>
 
   </div>
 
@@ -267,7 +268,20 @@
       <div class="field"><label>📎 Attachments</label><div id="proj-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('proj-drive-links')">＋ Attach file</button></div>
       <div class="field">
         <label>Assign materials</label>
-        <div id="proj-material-checkboxes" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;border:0.5px solid var(--border)"></div>
+        <input type="text" id="proj-mat-search" placeholder="Search materials…" oninput="populateMaterialCheckboxes(this.value)" style="margin-bottom:6px;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 12px;font-size:14px;color:var(--text);width:100%;outline:none" />
+        <div id="proj-material-checkboxes" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;border:0.5px solid var(--border)"></div>
+      </div>
+      <div class="field">
+        <label>Assign PDX models</label>
+        <div id="proj-pdx-checkboxes" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;border:0.5px solid var(--border)"></div>
+      </div>
+      <div class="field">
+        <label>Assign tissue samples</label>
+        <div id="proj-tissue-checkboxes" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;border:0.5px solid var(--border)"></div>
+      </div>
+      <div class="field">
+        <label>Assign cell lines</label>
+        <div id="proj-cellline-checkboxes" style="display:flex;flex-direction:column;gap:6px;max-height:120px;overflow-y:auto;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;border:0.5px solid var(--border)"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -542,6 +556,50 @@
 </div>
 
 
+<!-- MODAL: ADD PDX MODEL -->
+<div class="modal-backdrop" id="modal-add-pdx" style="display:none">
+  <div class="modal">
+    <div class="modal-title">Add PDX model</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+
+      <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">Model identity</div>
+      <div class="field-row">
+        <div class="field"><label>PDX model name</label><input type="text" id="pdx-name" placeholder="e.g. PDX14" /></div>
+        <div class="field"><label>Original nomenclature</label><input type="text" id="pdx-orig-name" placeholder="e.g. BC-PDX-001" /></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="field"><label>Mice IDs</label><input type="text" id="pdx-mice-ids" placeholder="e.g. M01, M02, M03" /></div>
+        <div class="field"><label>Number of mice</label><input type="number" id="pdx-mice-count" placeholder="e.g. 5" min="0" /></div>
+        <div class="field"><label>Year</label><input type="number" id="pdx-year" placeholder="e.g. 2024" min="2000" max="2100" /></div>
+      </div>
+      <div class="field"><label>Location</label><input type="text" id="pdx-location" placeholder="e.g. Vivarium Room 3, Cage B2" /></div>
+
+      <div class="sep"></div>
+      <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">Tissue samples available</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:8px">
+        <div class="field"><label style="font-size:11px">PT</label><input type="number" id="pdx-tis-pt" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">Lung</label><input type="number" id="pdx-tis-lung" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">Kidney</label><input type="number" id="pdx-tis-kidney" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">Ovary</label><input type="number" id="pdx-tis-ovary" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">PB</label><input type="number" id="pdx-tis-pb" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">BM</label><input type="number" id="pdx-tis-bm" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">Brain</label><input type="number" id="pdx-tis-brain" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">Liver</label><input type="number" id="pdx-tis-liver" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">FT</label><input type="number" id="pdx-tis-ft" placeholder="0" min="0" /></div>
+        <div class="field"><label style="font-size:11px">AG</label><input type="number" id="pdx-tis-ag" placeholder="0" min="0" /></div>
+      </div>
+
+      <div class="sep"></div>
+      <div class="field"><label>Comments / Notes</label><textarea id="pdx-notes" placeholder="Passage number, treatment history, any relevant notes…"></textarea></div>
+      <div class="field"><label>📎 Attachments</label><div id="pdx-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('pdx-drive-links')">＋ Attach file</button></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-add-pdx')">Cancel</button>
+      <button class="btn-primary" style="flex:2" onclick="addPDXModel()">Save PDX model</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: CONFIRM DELETE -->
 <div class="modal-backdrop center" id="modal-confirm" style="display:none">
   <div class="modal" style="max-width:340px">
@@ -583,7 +641,7 @@ const ALERT_EMAILS = ['fatemehahmadi.x999@gmail.com']; // ← add more emails as
 let currentUser = '';
 let activeMaterialId = null;
 let _confirmCallback = null;
-const state = { materials: [], projects: [], tissues: [], celllines: [], experiments: [], log: [] };
+const state = { materials: [], projects: [], tissues: [], celllines: [], experiments: [], pdxmodels: [], log: [] };
 
 // ── Firestore helpers ────────────────────────────────────────────────────────
 async function saveDoc(col, id, data) { await setDoc(doc(db, col, id), data); }
@@ -612,6 +670,10 @@ function startListeners() {
     renderExperiments();
   });
 
+  onSnapshot(collection(db, 'pdxmodels'), snap => {
+    state.pdxmodels = snap.docs.map(d => d.data()).sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    renderPDXModels();
+  });
   onSnapshot(collection(db, 'log'), snap => {
     state.log = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
     renderLog();
@@ -717,14 +779,22 @@ function enterApp(name) {
 window.switchTab = function(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  const tabs = ['projects','experiments','materials','tissues','celllines'];
-  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
+  // Find the tab button by its onclick attribute instead of relying on index
+  document.querySelectorAll('.tab').forEach(t => {
+    if (t.getAttribute('onclick') === `switchTab('${name}')`) t.classList.add('active');
+  });
+  const content = document.getElementById('tab-' + name);
+  if (content) content.classList.add('active');
 };
 
 // ── Modals ────────────────────────────────────────────────────────────────────
 window.openModal = function(id) {
-  if (id === 'modal-add-project') populateMaterialCheckboxes();
+  if (id === 'modal-add-project') {
+    populateMaterialCheckboxes();
+    populateProjectCheckboxes('proj-pdx-checkboxes', state.pdxmodels, m => m.name + (m.origName?' ('+m.origName+')':''));
+    populateProjectCheckboxes('proj-tissue-checkboxes', state.tissues, m => m.name + ' · ' + m.type + ' (' + m.qty + ' aliquots)');
+    populateProjectCheckboxes('proj-cellline-checkboxes', state.celllines, m => m.name + ' P' + m.passage);
+  }
   if (id === 'modal-add-experiment') { populateExpProjectSelect(); populateExpMaterialRows(); populateExpPerformer(); }
   document.getElementById(id).style.display = 'flex';
 };
@@ -751,26 +821,74 @@ function expiryBadge(expiry) {
 }
 
 // ── Projects ──────────────────────────────────────────────────────────────────
-function populateMaterialCheckboxes() {
+function populateMaterialCheckboxes(searchTerm) {
   const wrap = document.getElementById('proj-material-checkboxes');
   if (state.materials.length === 0) { wrap.innerHTML = '<div style="font-size:13px;color:var(--text3)">No materials yet.</div>'; return; }
-  wrap.innerHTML = state.materials.map(m =>
-    `<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-      <input type="checkbox" value="${m.id}" style="width:auto">
-      <span>${m.name}</span><span style="color:var(--text3);font-size:11px">(${m.stock} ${m.unit})</span>
+  const term = (searchTerm||'').toLowerCase();
+  const filtered = term ? state.materials.filter(m => m.name.toLowerCase().includes(term)) : state.materials;
+  if (filtered.length === 0) { wrap.innerHTML = '<div style="font-size:13px;color:var(--text3)">No materials match your search.</div>'; return; }
+  // Group by category
+  const byCategory = {};
+  filtered.forEach(m => {
+    const cat = m.category || 'Other';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(m);
+  });
+  // Get previously checked IDs to preserve selections
+  const checked = new Set([...wrap.querySelectorAll('input:checked')].map(i => i.value));
+  wrap.innerHTML = Object.entries(byCategory).map(([cat, mats]) => `
+    <div style="margin-bottom:6px">
+      <div onclick="toggleMatGroup('${cat}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 6px;background:var(--surface);border-radius:var(--radius-sm);font-size:12px;font-weight:600;color:var(--accent)">
+        <span>${cat} (${mats.length})</span>
+        <span id="grp-chev-${cat}" style="font-size:14px;transition:transform 0.2s">⌄</span>
+      </div>
+      <div id="grp-${cat}" style="display:flex;flex-direction:column;gap:4px;padding:6px 4px">
+        ${mats.map(m => {
+          const qty = m.category === 'Primer' ? `${m.priVolume||m.stock||0} µL` : `${m.stock} ${m.unit}`;
+          return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:4px">
+            <input type="checkbox" value="${m.id}" style="width:auto" ${checked.has(m.id)?'checked':''}>
+            <span>${m.name}</span><span style="color:var(--text3);font-size:11px">(${qty})</span>
+          </label>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function populateProjectCheckboxes(wrapperId, items, labelFn) {
+  const wrap = document.getElementById(wrapperId);
+  if (!wrap) return;
+  if (!items || items.length === 0) { wrap.innerHTML = '<div style="font-size:13px;color:var(--text3)">None added yet.</div>'; return; }
+  const checked = new Set([...wrap.querySelectorAll('input:checked')].map(i => i.value));
+  wrap.innerHTML = items.map(m => `
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+      <input type="checkbox" value="${m.id}" style="width:auto" ${checked.has(m.id)?'checked':''}>
+      <span>${labelFn(m)}</span>
     </label>`).join('');
 }
+
+window.toggleMatGroup = function(cat) {
+  const grp = document.getElementById(`grp-${cat}`);
+  const chev = document.getElementById(`grp-chev-${cat}`);
+  if (!grp) return;
+  const isOpen = grp.style.display !== 'none';
+  grp.style.display = isOpen ? 'none' : 'flex';
+  if (chev) chev.style.transform = isOpen ? 'rotate(-90deg)' : '';
+};
 
 window.addProject = async function() {
   const name = document.getElementById('proj-name').value.trim();
   if (!name) { document.getElementById('proj-name').focus(); return; }
   const checked = [...document.querySelectorAll('#proj-material-checkboxes input:checked')].map(c => c.value);
-  const proj = { id: Date.now()+'', name, desc: document.getElementById('proj-desc').value.trim(), materialIds: checked, created: new Date().toLocaleDateString(), createdBy: currentUser, driveLinks: [] };
+  const checkedPdx = [...document.querySelectorAll('#proj-pdx-checkboxes input:checked')].map(c => c.value);
+  const checkedTissues = [...document.querySelectorAll('#proj-tissue-checkboxes input:checked')].map(c => c.value);
+  const checkedCelllines = [...document.querySelectorAll('#proj-cellline-checkboxes input:checked')].map(c => c.value);
+  const proj = { id: Date.now()+'', name, desc: document.getElementById('proj-desc').value.trim(), materialIds: checked, pdxIds: checkedPdx, tissueIds: checkedTissues, celllineIds: checkedCelllines, created: new Date().toLocaleDateString(), createdBy: currentUser, driveLinks: [] };
   proj.driveLinks = await uploadPendingFiles('proj-drive-links', 'projects/' + proj.id);
   await saveDoc('projects', proj.id, proj);
   closeModal('modal-add-project');
   document.getElementById('proj-name').value = '';
   document.getElementById('proj-desc').value = '';
+  document.getElementById('proj-mat-search').value = '';
   await markChange(`Created project "${name}"`);
 };
 
@@ -798,6 +916,9 @@ window.renderProjects = function() {
       <div class="item-card-body" id="proj-${p.id}">
         ${p.desc ? `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${p.desc}</div>` : ''}
         <div class="exp-section-label">Assigned materials</div>${rows}
+        ${(p.pdxIds&&p.pdxIds.length)?`<div class="exp-section-label" style="margin-top:10px">PDX models</div>${p.pdxIds.map(id=>{const m=state.pdxmodels.find(x=>x.id===id);return m?`<div style="font-size:13px;color:var(--text2);padding:3px 0">${m.name}${m.origName?' ('+m.origName+')':''}</div>`:'';}).join('')}`:''}
+        ${(p.tissueIds&&p.tissueIds.length)?`<div class="exp-section-label" style="margin-top:10px">Tissue samples</div>${p.tissueIds.map(id=>{const m=state.tissues.find(x=>x.id===id);return m?`<div style="font-size:13px;color:var(--text2);padding:3px 0">${m.name} · ${m.type} (${m.qty} aliquots)</div>`:'';}).join('')}`:''}
+        ${(p.celllineIds&&p.celllineIds.length)?`<div class="exp-section-label" style="margin-top:10px">Cell lines</div>${p.celllineIds.map(id=>{const m=state.celllines.find(x=>x.id===id);return m?`<div style="font-size:13px;color:var(--text2);padding:3px 0">${m.name} P${m.passage}</div>`:'';}).join('')}`:''}
         ${renderDriveLinks(p.driveLinks)}
         ${p.activityLog&&p.activityLog.length?`<div style="margin-bottom:10px"><div class="exp-section-label">Recent activity</div>${p.activityLog.slice(0,3).map(l=>`<div class="log-entry"><span class="log-desc">${l.desc}</span><span class="log-meta">${l.ts} · ${l.user}</span></div>`).join('')}</div>`:''}
         <div class="action-row" style="margin-top:10px">
@@ -1381,6 +1502,102 @@ window.renderExperiments = function() {
 window.deleteExperiment = function(id) {
   const e = state.experiments.find(e => e.id === id);
   showConfirm(`Delete experiment "${e.title}"?`, async () => { await removeDoc('experiments', id); await markChange(`Deleted experiment "${e.title}"`); });
+};
+
+// ── PDX Models ───────────────────────────────────────────────────────────────
+const PDX_TISSUES = ['pt','lung','kidney','ovary','pb','bm','brain','liver','ft','ag'];
+const PDX_TISSUE_LABELS = { pt:'PT', lung:'Lung', kidney:'Kidney', ovary:'Ovary', pb:'PB', bm:'BM', brain:'Brain', liver:'Liver', ft:'FT', ag:'AG' };
+
+window.addPDXModel = async function() {
+  const name = document.getElementById('pdx-name').value.trim();
+  if (!name) { document.getElementById('pdx-name').focus(); return; }
+  const tissues = {};
+  PDX_TISSUES.forEach(t => {
+    const val = parseInt(document.getElementById(`pdx-tis-${t}`).value)||0;
+    if (val > 0) tissues[t] = val;
+  });
+  const pdx = {
+    id: Date.now()+'',
+    name,
+    origName: document.getElementById('pdx-orig-name').value.trim(),
+    miceIds: document.getElementById('pdx-mice-ids').value.trim(),
+    miceCount: parseInt(document.getElementById('pdx-mice-count').value)||0,
+    year: document.getElementById('pdx-year').value.trim(),
+    location: document.getElementById('pdx-location').value.trim(),
+    tissues,
+    notes: document.getElementById('pdx-notes').value.trim(),
+    addedBy: currentUser,
+    driveLinks: []
+  };
+  pdx.driveLinks = await uploadPendingFiles('pdx-drive-links', 'pdxmodels/' + pdx.id);
+  await saveDoc('pdxmodels', pdx.id, pdx);
+  closeModal('modal-add-pdx');
+  ['pdx-name','pdx-orig-name','pdx-mice-ids','pdx-mice-count','pdx-year','pdx-location','pdx-notes'].forEach(id => document.getElementById(id).value = '');
+  PDX_TISSUES.forEach(t => document.getElementById(`pdx-tis-${t}`).value = '');
+  document.getElementById('pdx-drive-links').innerHTML = '';
+  await markChange(`Added PDX model "${name}"`);
+};
+
+window.deletePDXModel = function(id) {
+  const p = state.pdxmodels.find(p => p.id === id);
+  showConfirm(`Delete PDX model "${p.name}"?`, async () => {
+    await removeDoc('pdxmodels', id);
+    await markChange(`Deleted PDX model "${p.name}"`);
+  });
+};
+
+window.updatePDXTissue = async function(pdxId, tisType, delta) {
+  const pdx = state.pdxmodels.find(p => p.id === pdxId);
+  if (!pdx) return;
+  pdx.tissues = pdx.tissues || {};
+  pdx.tissues[tisType] = Math.max(0, (pdx.tissues[tisType]||0) + delta);
+  pdx.activityLog = pdx.activityLog || [];
+  pdx.activityLog.unshift({ ts: new Date().toLocaleString(), user: currentUser, desc: `${delta>0?'Added':'Used'} ${Math.abs(delta)} ${PDX_TISSUE_LABELS[tisType]} sample(s) (now: ${pdx.tissues[tisType]})` });
+  await saveDoc('pdxmodels', pdx.id, pdx);
+  await markChange(`Updated ${PDX_TISSUE_LABELS[tisType]} for PDX "${pdx.name}"`);
+};
+
+window.renderPDXModels = function() {
+  const el = document.getElementById('pdxmodels-list');
+  if (!el) return;
+  const search = (document.getElementById('pdx-filter-search')?.value||'').toLowerCase();
+  let models = state.pdxmodels;
+  if (search) models = models.filter(p =>
+    (p.name||'').toLowerCase().includes(search) ||
+    (p.origName||'').toLowerCase().includes(search) ||
+    (p.miceIds||'').toLowerCase().includes(search)
+  );
+  if (models.length === 0) { el.innerHTML = '<div class="empty">No PDX models found.</div>'; return; }
+  el.innerHTML = models.map(p => {
+    const tisRows = PDX_TISSUES.filter(t => p.tissues&&p.tissues[t]>0).map(t => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:0.5px solid var(--border)">
+        <span style="font-size:13px;font-weight:500">${PDX_TISSUE_LABELS[t]}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px">${p.tissues[t]} sample(s)</span>
+          <button class="btn-sm" style="padding:3px 8px;font-size:12px" onclick="updatePDXTissue('${p.id}','${t}',-1)">−</button>
+          <button class="btn-sm primary" style="padding:3px 8px;font-size:12px" onclick="updatePDXTissue('${p.id}','${t}',1)">+</button>
+        </div>
+      </div>`).join('');
+    const allTisZero = !PDX_TISSUES.some(t => p.tissues&&p.tissues[t]>0);
+    return `<div class="item-card">
+      <div class="item-card-header" onclick="toggleCard('pdx-${p.id}')">
+        <div>
+          <div class="item-card-title">${p.name}${p.origName?` <span style="font-size:12px;color:var(--text3);font-weight:400">(${p.origName})</span>`:''}</div>
+          <div class="item-card-meta">${[p.year,p.location,p.miceCount?p.miceCount+' mice':(p.miceIds?'Mice: '+p.miceIds:'')].filter(Boolean).join(' · ')}</div>
+        </div>
+        <span class="chevron" id="chev-pdx-${p.id}">⌄</span>
+      </div>
+      <div class="item-card-body" id="pdx-${p.id}">
+        ${allTisZero ? '<div style="font-size:13px;color:var(--text3);margin-bottom:10px">No tissue samples recorded.</div>' : `<div style="margin-bottom:10px"><div class="exp-section-label">Tissue samples</div>${tisRows}</div>`}
+        ${p.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${p.notes}</div>`:''}
+        ${p.activityLog&&p.activityLog.length?`<div style="margin-bottom:10px"><div class="exp-section-label">Recent activity</div>${p.activityLog.slice(0,3).map(l=>`<div class="log-entry"><span class="log-desc">${l.desc}</span><span class="log-meta">${l.ts} · ${l.user}</span></div>`).join('')}</div>`:''}
+        ${renderDriveLinks(p.driveLinks)}
+        <div class="action-row">
+          <button class="btn-sm danger" onclick="deletePDXModel('${p.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 };
 
 // ── Activity Log ──────────────────────────────────────────────────────────────
