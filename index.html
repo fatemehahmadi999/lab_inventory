@@ -542,74 +542,6 @@
 </div>
 
 
-<div class="modal-backdrop" id="modal-add-plasmid" style="display:none">
-  <div class="modal">
-    <div class="modal-title">Add plasmid</div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-
-      <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">Identity</div>
-      <div class="field-row">
-        <div class="field"><label>Plasmid ID</label><input type="text" id="pla-id" placeholder="e.g. pLAB001" /></div>
-        <div class="field"><label>Plasmid name</label><input type="text" id="pla-name" placeholder="e.g. pCMV-GFP" /></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Backbone</label><input type="text" id="pla-backbone" placeholder="e.g. pUC19, pAAV" /></div>
-        <div class="field"><label>Vector type</label>
-          <select id="pla-vectype" onchange="toggleOther('pla-vectype','pla-vectype-other')">
-            <option value="">— select —</option>
-            <option>Expression</option>
-            <option>Lentiviral</option>
-            <option>AAV</option>
-            <option>Retroviral</option>
-            <option>CRISPR</option>
-            <option>Reporter</option>
-            <option>Cloning</option>
-            <option>Other</option>
-          </select>
-          <input type="text" id="pla-vectype-other" placeholder="Please specify…" style="display:none;margin-top:6px;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:9px 12px;font-size:15px;color:var(--text);width:100%;outline:none" />
-        </div>
-      </div>
-
-      <div class="sep"></div>
-      <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">Source</div>
-      <div class="field-row">
-        <div class="field"><label>Supplier</label><input type="text" id="pla-supplier" placeholder="e.g. AddGene, in-house" /></div>
-        <div class="field"><label>AddGene ID</label><input type="text" id="pla-addgene-id" placeholder="e.g. 12345" /></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Received from</label><input type="text" id="pla-from" placeholder="e.g. Dr. Smith, lab name" /></div>
-        <div class="field"><label>Concentration (ng/µL)</label><input type="number" id="pla-conc" placeholder="e.g. 500" min="0" /></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>AddGene link</label><input type="url" id="pla-link-addgene" placeholder="https://addgene.org/…" /></div>
-        <div class="field"><label>Benchling link</label><input type="url" id="pla-link-benchling" placeholder="https://benchling.com/…" /></div>
-      </div>
-
-      <div class="sep"></div>
-      <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">Biology</div>
-      <div class="field-row">
-        <div class="field"><label>Promoter</label><input type="text" id="pla-promoter" placeholder="e.g. CMV, EF1α, T7" /></div>
-        <div class="field"><label>Insert name</label><input type="text" id="pla-insert" placeholder="e.g. GFP, Cas9, shRNA" /></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Insert size (bp)</label><input type="number" id="pla-insert-size" placeholder="e.g. 720" min="0" /></div>
-        <div class="field"><label>Selection marker</label><input type="text" id="pla-selection" placeholder="e.g. Ampicillin, Neomycin" /></div>
-      </div>
-      <div class="field"><label>Bacterial resistance</label><input type="text" id="pla-resistance" placeholder="e.g. AmpR, KanR" /></div>
-
-      <div class="sep"></div>
-      <div style="font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em">Storage</div>
-      <div class="field"><label>Host cell lines</label><input type="text" id="pla-celllines" placeholder="e.g. HEK293T, Jurkat" /></div>
-      <div class="field"><label>Comments</label><textarea id="pla-comments" placeholder="Any additional notes…"></textarea></div>
-      <div class="field"><label>📎 Attachments</label><div id="pla-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('pla-drive-links')">＋ Attach file</button></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal('modal-add-plasmid')">Cancel</button>
-      <button class="btn-primary" style="flex:2" onclick="addPlasmid()">Save plasmid</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: CONFIRM DELETE -->
 <div class="modal-backdrop center" id="modal-confirm" style="display:none">
   <div class="modal" style="max-width:340px">
@@ -923,6 +855,12 @@ window.addMaterial = async function() {
     driveLinks: [],
     log: []
   };
+  // For primers, use priVolume as the trackable stock
+  if (mat.category === 'Primer') {
+    if (mat.priVolume > 0) mat.stock = mat.priVolume;
+    mat.unit = 'µL';
+    if (mat.priLowAt > 0) mat.lowAt = mat.priLowAt;
+  }
   mat.driveLinks = await uploadPendingFiles('mat-drive-links', 'materials/' + mat.id);
   await saveDoc('materials', mat.id, mat);
   closeModal('modal-add-material');
@@ -1016,6 +954,130 @@ function renderMaterials() {
     </div>`;
   }).join('');
 }
+
+// ── Tissues ──────────────────────────────────────────────────────────────────
+window.addTissue = async function() {
+  const name = document.getElementById('tis-name').value.trim();
+  if (!name) { document.getElementById('tis-name').focus(); return; }
+  const type = document.getElementById('tis-type').value === 'Other'
+    ? (document.getElementById('tis-type-other').value.trim() || 'Other')
+    : document.getElementById('tis-type').value;
+  const tis = {
+    id: Date.now()+'', name, type,
+    qty: parseInt(document.getElementById('tis-qty').value)||1,
+    freezer: document.getElementById('tis-freezer').value,
+    shelf: document.getElementById('tis-shelf').value.trim(),
+    date: document.getElementById('tis-date').value,
+    notes: document.getElementById('tis-notes').value.trim(),
+    driveLinks: []
+  };
+  tis.driveLinks = await uploadPendingFiles('tis-drive-links', 'tissues/' + tis.id);
+  await saveDoc('tissues', tis.id, tis);
+  closeModal('modal-add-tissue');
+  ['tis-name','tis-qty','tis-shelf','tis-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('tis-drive-links').innerHTML = '';
+  document.getElementById('tis-type-other').style.display = 'none';
+  document.getElementById('tis-type-other').value = '';
+  await markChange(`Added sample "${name}"`);
+};
+
+function renderTissues() {
+  const el = document.getElementById('tissues-list');
+  const freezerEl = document.getElementById('freezer-view');
+  if (!el) return;
+  if (state.tissues.length === 0) {
+    el.innerHTML = '';
+    if (freezerEl) freezerEl.innerHTML = '<div class="empty">No samples stored.</div>';
+    return;
+  }
+  const byFreezer = {};
+  state.tissues.forEach(t => { if (!byFreezer[t.freezer]) byFreezer[t.freezer]=[]; byFreezer[t.freezer].push(t); });
+  if (freezerEl) freezerEl.innerHTML = Object.entries(byFreezer).map(([freezer, samples]) => `
+    <div class="freezer-section"><div class="freezer-label">🧊 ${freezer}</div>
+    <div class="shelf-grid">${samples.map(s => `
+      <div class="shelf-slot occupied" onclick="toggleCard('tis-${s.id}')">
+        <div class="shelf-slot-label">${s.shelf||'TBD'}</div>
+        <div class="shelf-slot-content">${s.name}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">${s.qty} · ${s.type}</div>
+      </div>`).join('')}</div></div>`).join('');
+  el.innerHTML = state.tissues.map(s => `
+    <div class="item-card">
+      <div class="item-card-header" onclick="toggleCard('tis-${s.id}')">
+        <div><div class="item-card-title">${s.name}</div><div class="item-card-meta">${s.type} · ${s.freezer} · ${s.shelf||'TBD'}</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-size:15px;font-weight:500">${s.qty} <span style="font-size:12px;color:var(--text3)">aliquot(s)</span></div>
+          <span class="chevron" id="chev-tis-${s.id}">⌄</span>
+        </div>
+      </div>
+      <div class="item-card-body" id="tis-${s.id}">
+        ${s.date?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">Frozen: ${s.date}</div>`:''}
+        ${s.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${s.notes}</div>`:''}
+        ${s.activityLog&&s.activityLog.length?`<div style="margin-bottom:10px"><div class="exp-section-label">Recent activity</div>${s.activityLog.slice(0,3).map(l=>`<div class="log-entry"><span class="log-desc">${l.desc}</span><span class="log-meta">${l.ts} · ${l.user}</span></div>`).join('')}</div>`:''}
+        ${renderDriveLinks(s.driveLinks)}
+        <div class="action-row">
+          <button class="btn-sm danger" onclick="decrementTissue('${s.id}')">Use 1 aliquot</button>
+          <button class="btn-sm danger" onclick="deleteTissue('${s.id}')">Remove</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Use material modal ────────────────────────────────────────────────────────
+window.openUseMaterial = function(id) {
+  activeMaterialId = id;
+  const mat = state.materials.find(m => m.id === id);
+  if (!mat) return;
+  document.getElementById('use-mat-title').textContent = mat.name;
+  document.getElementById('use-mat-info').innerHTML =
+    `<strong>Stock:</strong> ${mat.stock} ${mat.unit} &nbsp;|&nbsp; <strong>Location:</strong> ${mat.location||'Not set'}`;
+  document.getElementById('use-mat-amount').value = '';
+  document.getElementById('use-mat-note').value = '';
+  document.getElementById('use-mat-new-loc').value = mat.location||'';
+  document.getElementById('use-mat-action').value = 'consume';
+  toggleUseAction();
+  openModal('modal-use-material');
+};
+
+window.toggleUseAction = function() {
+  const action = document.getElementById('use-mat-action').value;
+  document.getElementById('use-mat-amount-wrap').style.display = action === 'relocate' ? 'none' : 'flex';
+  document.getElementById('use-mat-loc-wrap').style.display = action === 'relocate' ? 'block' : 'none';
+  document.getElementById('use-mat-amount-label').textContent = action === 'consume' ? 'Amount used' : 'Amount to add';
+};
+
+window.applyMaterialAction = async function() {
+  const mat = state.materials.find(m => m.id === activeMaterialId);
+  if (!mat) return;
+  const action = document.getElementById('use-mat-action').value;
+  const amount = parseFloat(document.getElementById('use-mat-amount').value) || 0;
+  const note = document.getElementById('use-mat-note').value.trim();
+  const newLoc = document.getElementById('use-mat-new-loc').value.trim();
+  let desc = '';
+  mat.log = mat.log || [];
+  if (action === 'consume') {
+    if (amount <= 0) { showToast('Enter an amount > 0'); return; }
+    const prev = mat.stock;
+    mat.stock = Math.max(0, parseFloat((mat.stock - amount).toFixed(4)));
+    if (mat.category === 'Primer') mat.priVolume = mat.stock;
+    desc = `Used ${amount} ${mat.unit} of "${mat.name}" (${prev} → ${mat.stock})${note?': '+note:''}`;
+    mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'consume', amount, note });
+    if (mat.stock <= mat.lowAt) sendLowStockAlert(mat);
+  } else if (action === 'add') {
+    if (amount <= 0) { showToast('Enter an amount > 0'); return; }
+    const prev = mat.stock;
+    mat.stock = parseFloat((mat.stock + amount).toFixed(4));
+    if (mat.category === 'Primer') mat.priVolume = mat.stock;
+    desc = `Restocked "${mat.name}" +${amount} ${mat.unit} (${prev} → ${mat.stock})${note?': '+note:''}`;
+    mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'add', amount, note });
+  } else {
+    mat.location = newLoc;
+    desc = `Moved "${mat.name}" to ${newLoc}`;
+    mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'relocate', note: newLoc });
+  }
+  await saveDoc('materials', mat.id, mat);
+  closeModal('modal-use-material');
+  await markChange(desc);
+};
 
 // ── Cell Lines ────────────────────────────────────────────────────────────────
 window.addCellLine = async function() {
@@ -1204,7 +1266,10 @@ window.addExpMaterialRow = function() {
     byCategory[cat].push(m);
   });
   const opts = Object.entries(byCategory).map(([cat, mats]) =>
-    `<optgroup label="${cat}">${mats.map(m=>`<option value="mat:${m.id}">${m.name} (${m.stock} ${m.unit})</option>`).join('')}</optgroup>`
+    `<optgroup label="${cat}">${mats.map(m => {
+      const qty = m.category === 'Primer' ? `${m.priVolume||0} µL` : `${m.stock} ${m.unit}`;
+      return `<option value="mat:${m.id}">${m.name} (${qty})</option>`;
+    }).join('')}</optgroup>`
   ).join('');
   const row = document.createElement('div');
   row.style.cssText = 'display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center';
@@ -1222,7 +1287,9 @@ window.addExperiment = async function() {
     if (!val) return null;
     const id = val.startsWith('mat:') ? val.slice(4) : val;
     const m = state.materials.find(x => x.id === id);
-    return m ? { id: m.id, name: m.name, unit: m.unit, amount: parseFloat(amt.value)||0 } : null;
+    if (!m) return null;
+    const unit = m.category === 'Primer' ? 'µL' : m.unit;
+    return { id: m.id, name: m.name, unit, amount: parseFloat(amt.value)||0 };
   }).filter(Boolean);
   const projId = document.getElementById('exp-project').value;
   const projName = projId ? (state.projects.find(p=>p.id===projId)||{}).name||'' : '';
@@ -1250,13 +1317,9 @@ window.addExperiment = async function() {
     const mat = state.materials.find(x => x.id === row.id);
     if (!mat) continue;
     const prev = mat.stock;
-    if (mat.category === 'Primer') {
-      mat.priVolume = Math.max(0, parseFloat(((mat.priVolume||0) - row.amount).toFixed(4)));
-      if (mat.priLowAt && mat.priVolume <= mat.priLowAt) sendLowStockAlert({ name: mat.name, stock: mat.priVolume, unit: 'µL', location: mat.location });
-    } else {
-      mat.stock = Math.max(0, parseFloat((mat.stock - row.amount).toFixed(4)));
-      if (mat.stock <= mat.lowAt) sendLowStockAlert(mat);
-    }
+    mat.stock = Math.max(0, parseFloat((mat.stock - row.amount).toFixed(4)));
+    if (mat.category === 'Primer') mat.priVolume = mat.stock;
+    if (mat.stock <= mat.lowAt) sendLowStockAlert(mat);
     mat.log = mat.log || [];
     mat.log.unshift({ ts: new Date().toLocaleString(), user: exp.user, action: 'consume', amount: row.amount, note: `Experiment: ${title}` });
     await saveDoc('materials', mat.id, mat);
