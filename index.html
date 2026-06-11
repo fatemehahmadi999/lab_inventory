@@ -833,7 +833,7 @@ function expiryBadge(expiry) {
 }
 
 // ── Projects ──────────────────────────────────────────────────────────────────
-function populateMaterialCheckboxes(searchTerm) {
+window.populateMaterialCheckboxes = function(searchTerm) {
   const wrap = document.getElementById('proj-material-checkboxes');
   if (state.materials.length === 0) { wrap.innerHTML = '<div style="font-size:13px;color:var(--text3)">No materials yet.</div>'; return; }
   const term = (searchTerm||'').toLowerCase();
@@ -852,9 +852,9 @@ function populateMaterialCheckboxes(searchTerm) {
     <div style="margin-bottom:6px">
       <div onclick="toggleMatGroup('${cat}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 6px;background:var(--surface);border-radius:var(--radius-sm);font-size:12px;font-weight:600;color:var(--accent)">
         <span>${cat} (${mats.length})</span>
-        <span id="grp-chev-${cat}" style="font-size:14px;transition:transform 0.2s">⌄</span>
+        <span id="grp-chev-${cat}" style="font-size:14px;transition:transform 0.2s;transform:rotate(-90deg)">⌄</span>
       </div>
-      <div id="grp-${cat}" style="display:flex;flex-direction:column;gap:4px;padding:6px 4px">
+      <div id="grp-${cat}" style="display:none;flex-direction:column;gap:4px;padding:6px 4px">
         ${mats.map(m => {
           const qty = m.category === 'Primer' ? `${m.priVolume||m.stock||0} µL` : `${m.stock} ${m.unit}`;
           return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:2px 4px;border-radius:4px">
@@ -879,12 +879,12 @@ function populateProjectCheckboxes(wrapperId, items, labelFn) {
 }
 
 window.toggleMatGroup = function(cat) {
-  const grp = document.getElementById(`grp-${cat}`);
-  const chev = document.getElementById(`grp-chev-${cat}`);
+  const grp = document.getElementById('grp-' + cat);
+  const chev = document.getElementById('grp-chev-' + cat);
   if (!grp) return;
   const isOpen = grp.style.display !== 'none';
   grp.style.display = isOpen ? 'none' : 'flex';
-  if (chev) chev.style.transform = isOpen ? 'rotate(-90deg)' : '';
+  if (chev) chev.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
 };
 
 window.addProject = async function() {
