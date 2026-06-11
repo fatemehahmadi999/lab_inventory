@@ -1453,35 +1453,47 @@ window.removePendingFile = function(containerId, name, el) {
 
 async function uploadPendingFiles(containerId, storagePath) {
   const files = pendingFiles[containerId] || [];
+  console.log('uploadPendingFiles called, files:', files.length, 'container:', containerId);
   if (files.length === 0) return [];
   const results = [];
   showToast('Uploading files…');
   for (const {file, name} of files) {
+    console.log('Uploading file:', name, 'size:', file.size, 'to path:', storagePath);
     try {
       const safeName = Date.now() + '_' + name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const storageRef = ref(storage, `${storagePath}/${safeName}`);
+      const fullPath = `${storagePath}/${safeName}`;
+      console.log('Storage ref path:', fullPath);
+      const storageRef = ref(storage, fullPath);
+      console.log('Storage ref created:', storageRef);
       await new Promise((resolve, reject) => {
         const task = uploadBytesResumable(storageRef, file);
-        task.on('state_changed', null, reject, async () => {
-          try {
-            const url = await getDownloadURL(task.snapshot.ref);
-            results.push({ name, url, path: `${storagePath}/${safeName}` });
-            resolve();
-          } catch(err) {
-            console.error('getDownloadURL failed:', err);
-            showToast('Upload error: ' + err.message);
-            reject(err);
+        task.on('state_changed',
+          (snapshot) => console.log('Upload progress:', snapshot.bytesTransferred, '/', snapshot.totalBytes),
+          (err) => { console.error('Upload error:', err.code, err.message); showToast('Upload failed: ' + err.message); reject(err); },
+          async () => {
+            console.log('Upload complete, getting URL...');
+            try {
+              const url = await getDownloadURL(task.snapshot.ref);
+              console.log('Download URL:', url);
+              results.push({ name, url, path: fullPath });
+              resolve();
+            } catch(err) {
+              console.error('getDownloadURL failed:', err.code, err.message);
+              showToast('URL error: ' + err.message);
+              reject(err);
+            }
           }
-        });
+        );
       });
     } catch(err) {
-      console.error('Upload failed for', name, err);
+      console.error('Outer upload catch:', err.code, err.message);
       showToast('Upload failed: ' + err.message);
     }
   }
   pendingFiles[containerId] = [];
   const el = document.getElementById(containerId);
   if (el) el.innerHTML = '';
+  console.log('Upload results:', results);
   if (results.length > 0) showToast(results.length + ' file(s) uploaded ✓');
   return results;
 }
