@@ -327,34 +327,20 @@
         </div>
         <div class="field">
           <label>Hazard classification</label>
-          <select id="mat-hazard">
-            <option value="">— none —</option>
-            <option>Flammable</option>
-            <option>Toxic</option>
-            <option>Corrosive</option>
-            <option>Oxidising</option>
-            <option>Irritant</option>
-            <option>Health hazard</option>
-            <option>Environmental hazard</option>
-            <option>Explosive</option>
-            <option>Compressed gas</option>
-            <option>Radioactive</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>GHS Pictogram(s)</label>
-          <div id="mat-pictogram-wrap" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS01" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/GHS-pictogram-explos.svg/100px-GHS-pictogram-explos.svg.png" width="48" height="48" alt="GHS01">Explosive</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS02" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/GHS-pictogram-flamme.svg/100px-GHS-pictogram-flamme.svg.png" width="48" height="48" alt="GHS02">Flammable</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS03" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/GHS-pictogram-rondflam.svg/100px-GHS-pictogram-rondflam.svg.png" width="48" height="48" alt="GHS03">Oxidising</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS04" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/GHS-pictogram-bottle.svg/100px-GHS-pictogram-bottle.svg.png" width="48" height="48" alt="GHS04">Compressed gas</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS05" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/GHS-pictogram-acid.svg/100px-GHS-pictogram-acid.svg.png" width="48" height="48" alt="GHS05">Corrosive</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS06" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/GHS-pictogram-skull.svg/100px-GHS-pictogram-skull.svg.png" width="48" height="48" alt="GHS06">Acute toxic</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS07" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/GHS-pictogram-exclam.svg/100px-GHS-pictogram-exclam.svg.png" width="48" height="48" alt="GHS07">Irritant</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS08" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/GHS-pictogram-silhouette.svg/100px-GHS-pictogram-silhouette.svg.png" width="48" height="48" alt="GHS08">Health hazard</label>
-            <label style="display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:var(--text2)"><input type="checkbox" value="GHS09" style="width:auto"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/GHS-pictogram-pollut.svg/100px-GHS-pictogram-pollut.svg.png" width="48" height="48" alt="GHS09">Environmental</label>
+          <div id="mat-hazard-wrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Flammable" style="width:auto"> Flammable</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Toxic" style="width:auto"> Toxic</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Corrosive" style="width:auto"> Corrosive</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Oxidising" style="width:auto"> Oxidising</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Irritant" style="width:auto"> Irritant</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Health hazard" style="width:auto"> Health hazard</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Environmental hazard" style="width:auto"> Environmental hazard</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Explosive" style="width:auto"> Explosive</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Compressed gas" style="width:auto"> Compressed gas</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;min-width:140px"><input type="checkbox" value="Radioactive" style="width:auto"> Radioactive</label>
           </div>
         </div>
+        
         <div class="field"><label>Product link (SDS / datasheet URL)</label><input type="url" id="mat-link" placeholder="https://…" /></div>
       </div>
 
@@ -761,8 +747,7 @@ window.addMaterial = async function() {
     catalog: document.getElementById('mat-catalog').value.trim(),
     size: document.getElementById('mat-size').value.trim(),
     opened: document.getElementById('mat-opened').value,
-    hazard: document.getElementById('mat-hazard').value,
-    pictograms: [...document.querySelectorAll('#mat-pictogram-wrap input:checked')].map(i => i.value),
+    hazard: [...document.querySelectorAll('#mat-hazard-wrap input:checked')].map(i => i.value),
     link: document.getElementById('mat-link').value.trim(),
     driveLinks: [],
     log: []
@@ -775,8 +760,7 @@ window.addMaterial = async function() {
   document.getElementById('mat-cat-other').value = '';
   document.getElementById('reagent-fields').style.display = 'none';
   ['mat-company','mat-catalog','mat-size','mat-opened','mat-link'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('mat-hazard').value = '';
-  document.querySelectorAll('#mat-pictogram-wrap input').forEach(i => i.checked = false);
+  document.querySelectorAll('#mat-hazard-wrap input').forEach(i => i.checked = false);
   document.getElementById('mat-drive-links').innerHTML = '';
   await markChange(`Added material "${name}"`);
 };
@@ -820,116 +804,7 @@ function renderMaterials() {
           ${m.catalog?`<div><span style="color:var(--text3)">Cat #:</span> ${m.catalog}</div>`:''}
           ${m.size?`<div><span style="color:var(--text3)">Size:</span> ${m.size}</div>`:''}
           ${m.opened?`<div><span style="color:var(--text3)">Opened:</span> ${m.opened}</div>`:''}
-          ${m.hazard?`<div style="grid-column:1/-1"><span style="color:var(--text3)">Hazard:</span> <span style="color:var(--warn);font-weight:500">${m.hazard}</span></div>`:''}
-          ${m.pictograms&&m.pictograms.length?`<div style="grid-column:1/-1"><span style="color:var(--text3)">GHS:</span> ${m.pictograms.join(', ')}</div>`:''}
-          ${m.link?`<div style="grid-column:1/-1"><a href="${m.link}" target="_blank" style="color:var(--accent);font-size:12px">🔗 Product datasheet</a></div>`:''}
-        </div>` : ''}
-        ${m.notes ? `<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${m.notes}</div>` : ''}
-        ${logs ? `<div style="margin-bottom:10px"><div class="exp-section-label">Recent activity</div>${logs}</div>` : ''}
-        ${renderDriveLinks(m.driveLinks)}
-        <div class="action-row">
-          <button class="btn-sm primary" onclick="openUseMaterial('${m.id}')">Update stock</button>
-          <button class="btn-sm danger" onclick="deleteMaterial('${m.id}')">Remove</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── Use material modal ────────────────────────────────────────────────────────
-window.openUseMaterial = function(id) {
-  activeMaterialId = id;
-  const mat = state.materials.find(m => m.id === id);
-  if (!mat) return;
-  document.getElementById('use-mat-title').textContent = mat.name;
-  document.getElementById('use-mat-info').innerHTML = `<strong>Stock:</strong> ${mat.stock} ${mat.unit} &nbsp;|&nbsp; <strong>Location:</strong> ${mat.location||'Not set'}`;
-  document.getElementById('use-mat-amount').value = '';
-  document.getElementById('use-mat-note').value = '';
-  document.getElementById('use-mat-new-loc').value = mat.location||'';
-  document.getElementById('use-mat-action').value = 'consume';
-  toggleUseAction();
-  openModal('modal-use-material');
-};
-window.toggleUseAction = function() {
-  const action = document.getElementById('use-mat-action').value;
-  document.getElementById('use-mat-amount-wrap').style.display = action === 'relocate' ? 'none' : 'flex';
-  document.getElementById('use-mat-loc-wrap').style.display = action === 'relocate' ? 'block' : 'none';
-  document.getElementById('use-mat-amount-label').textContent = action === 'consume' ? 'Amount used' : 'Amount to add';
-};
-window.applyMaterialAction = async function() {
-  const mat = state.materials.find(m => m.id === activeMaterialId);
-  if (!mat) return;
-  const action = document.getElementById('use-mat-action').value;
-  const amount = parseFloat(document.getElementById('use-mat-amount').value) || 0;
-  const note = document.getElementById('use-mat-note').value.trim();
-  const newLoc = document.getElementById('use-mat-new-loc').value.trim();
-  let desc = '';
-  mat.log = mat.log || [];
-  let lowAlert = null;
-  if (action === 'consume') {
-    if (amount <= 0) { showToast('Enter an amount > 0'); return; }
-    const prev = mat.stock;
-    mat.stock = Math.max(0, parseFloat((mat.stock - amount).toFixed(4)));
-    desc = `Used ${amount} ${mat.unit} of "${mat.name}" (${prev} → ${mat.stock})${note?': '+note:''}`;
-    mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'consume', amount, note });
-    if (mat.stock <= mat.lowAt) lowAlert = mat;
-  } else if (action === 'add') {
-    if (amount <= 0) { showToast('Enter an amount > 0'); return; }
-    const prev = mat.stock;
-    mat.stock = parseFloat((mat.stock + amount).toFixed(4));
-    desc = `Restocked "${mat.name}" +${amount} ${mat.unit} (${prev} → ${mat.stock})${note?': '+note:''}`;
-    mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'add', amount, note });
-  } else {
-    mat.location = newLoc;
-    desc = `Moved "${mat.name}" to ${newLoc}`;
-    mat.log.unshift({ ts: new Date().toLocaleString(), user: currentUser, action: 'relocate', note: newLoc });
-  }
-  await saveDoc('materials', mat.id, mat);
-  closeModal('modal-use-material');
-  await markChange(desc, lowAlert);
-};
-
-// ── Tissues ───────────────────────────────────────────────────────────────────
-window.addTissue = async function() {
-  const name = document.getElementById('tis-name').value.trim();
-  if (!name) { document.getElementById('tis-name').focus(); return; }
-  const tis = { id: Date.now()+'', name, type: document.getElementById('tis-type').value === 'Other' ? (document.getElementById('tis-type-other').value.trim() || 'Other') : document.getElementById('tis-type').value, qty: parseInt(document.getElementById('tis-qty').value)||1, freezer: document.getElementById('tis-freezer').value, shelf: document.getElementById('tis-shelf').value.trim(), date: document.getElementById('tis-date').value, notes: document.getElementById('tis-notes').value.trim(), driveLinks: [] };
-  tis.driveLinks = await uploadPendingFiles('tis-drive-links', 'tissues/' + tis.id);
-  await saveDoc('tissues', tis.id, tis);
-  closeModal('modal-add-tissue');
-  ['tis-name','tis-qty','tis-shelf','tis-notes'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('tis-type-other').style.display = 'none';
-  document.getElementById('tis-type-other').value = '';
-  document.getElementById('tis-drive-links').innerHTML = '';
-  await markChange(`Added sample "${name}"`);
-};
-
-function renderTissues() {
-  const el = document.getElementById('tissues-list');
-  const freezerEl = document.getElementById('freezer-view');
-  if (!el) return;
-  if (state.tissues.length === 0) { el.innerHTML = ''; freezerEl.innerHTML = '<div class="empty">No samples stored.</div>'; return; }
-  const byFreezer = {};
-  state.tissues.forEach(t => { if (!byFreezer[t.freezer]) byFreezer[t.freezer]=[]; byFreezer[t.freezer].push(t); });
-  freezerEl.innerHTML = Object.entries(byFreezer).map(([freezer, samples]) => `
-    <div class="freezer-section"><div class="freezer-label">🧊 ${freezer}</div>
-    <div class="shelf-grid">${samples.map(s => `
-      <div class="shelf-slot occupied" onclick="toggleCard('tis-${s.id}')">
-        <div class="shelf-slot-label">${s.shelf||'TBD'}</div>
-        <div class="shelf-slot-content">${s.name}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px">${s.qty} · ${s.type}</div>
-      </div>`).join('')}</div></div>`).join('');
-  el.innerHTML = state.tissues.map(s => `
-    <div class="item-card">
-      <div class="item-card-header" onclick="toggleCard('tis-${s.id}')">
-        <div><div class="item-card-title">${s.name}</div><div class="item-card-meta">${s.type} · ${s.freezer} · ${s.shelf||'TBD'}</div></div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="font-size:15px;font-weight:500">${s.qty} <span style="font-size:12px;color:var(--text3)">aliquot(s)</span></div>
-          <span class="chevron" id="chev-tis-${s.id}">⌄</span>
-        </div>
-      </div>
-      <div class="item-card-body" id="tis-${s.id}">
-        ${s.date?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">Frozen: ${s.date}</div>`:''}
+          ${m.hazard&&m.hazard.length?`<div style="grid-column:1/-1"><span style="color:var(--text3)">Hazard:</span> <span style="color:var(--warn);font-weight:500">${Array.isArray(m.hazard)?m.hazard.join(', '):m.hazard}</span></div>`:''}
         ${s.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${s.notes}</div>`:''}
         ${renderDriveLinks(s.driveLinks)}
         <div class="action-row">
