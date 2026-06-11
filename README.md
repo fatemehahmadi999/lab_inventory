@@ -1,9 +1,8 @@
-[README.md](https://github.com/user-attachments/files/28803615/README.md)
 # 🧪 Lab Inventory
 
 A shared, real-time lab inventory and experiment tracker for wet lab teams. No installation, no server to manage — just open the link and go.
 
-🔗 **[Open Lab Inventory](https://fatemehahmadi999.github.io/lab_inventory/)**
+🔗 **[Open Lab Inventory](https://winkler-lab.github.io/lab_inventory/)**
 
 > Password-protected. Contact the lab manager for the access code.
 
