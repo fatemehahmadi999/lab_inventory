@@ -243,7 +243,16 @@
       <select id="exp-filter-user" onchange="renderExperiments()">
         <option value="">All users</option>
       </select>
-      <input type="text" id="exp-filter-search" placeholder="Search…" oninput="renderExperiments()" style="flex:1;min-width:120px" />
+      <select id="exp-filter-project" onchange="renderExperiments()">
+        <option value="">All projects</option>
+      </select>
+      <select id="exp-sort" onchange="renderExperiments()">
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="user-asc">User A→Z</option>
+        <option value="project-asc">Project A→Z</option>
+      </select>
+      <input type="text" id="exp-filter-search" placeholder="Search…" oninput="renderExperiments()" style="flex:1;min-width:100px" />
     </div>
     <div id="experiments-list"><div class="empty">No experiments yet.</div></div>
   </div>
@@ -264,6 +273,7 @@
     <div style="display:flex;flex-direction:column;gap:12px">
       <div class="field"><label>Project name</label><input type="text" id="proj-name" placeholder="e.g. PDX14 experiment" /></div>
       <div class="field"><label>Description (optional)</label><textarea id="proj-desc" placeholder="Brief notes..."></textarea></div>
+      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="proj-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('proj-drive-links')">＋ Attach file</button></div>
       <div class="field">
         <label>Assign materials</label>
         <div id="proj-material-checkboxes" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;border:0.5px solid var(--border)"></div>
@@ -305,6 +315,7 @@
         <div class="field"><label>Expiration date</label><input type="date" id="mat-expiry" /></div>
       </div>
       <div class="field"><label>Notes (catalog #, supplier…)</label><textarea id="mat-notes" placeholder="Optional"></textarea></div>
+      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="mat-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('mat-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-material')">Cancel</button>
@@ -337,6 +348,7 @@
       </div>
       <div class="field"><label>Date frozen</label><input type="date" id="tis-date" /></div>
       <div class="field"><label>Notes</label><textarea id="tis-notes" placeholder="Passage, condition, etc."></textarea></div>
+      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="tis-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('tis-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-tissue')">Cancel</button>
@@ -361,6 +373,7 @@
       </div>
       <div class="field"><label>Origin / source</label><input type="text" id="cl-origin" placeholder="e.g. ATCC, in-house" /></div>
       <div class="field"><label>Notes (mycoplasma status, genotype…)</label><textarea id="cl-notes" placeholder="Optional"></textarea></div>
+      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="cl-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('cl-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-cellline')">Cancel</button>
@@ -391,6 +404,7 @@
       <div class="field"><label>Result</label><textarea id="exp-result" placeholder="What happened? Key observations..."></textarea></div>
       <div class="field"><label>Next steps</label><textarea id="exp-next" placeholder="Follow-up actions, repeats needed..."></textarea></div>
       <div class="field"><label>Notes</label><textarea id="exp-notes" placeholder="Any other relevant info..."></textarea></div>
+      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="exp-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('exp-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-experiment')">Cancel</button>
@@ -443,6 +457,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAGYqub8oApnvl3a-QcJ87WFy8BP-gMOuU",
@@ -455,7 +470,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
+// ── Storage bucket ───────────────────────────────────────────────────────────
+// Remember to set Firebase Storage rules to: allow read, write: if true;
 // ── EmailJS config (fill in after setup) ────────────────────────────────────
 const EMAILJS_SERVICE_ID = 'service_amvww6r';
 const EMAILJS_TEMPLATE_ID = 'template_1dxgs0n';
@@ -638,7 +656,8 @@ window.addProject = async function() {
   const name = document.getElementById('proj-name').value.trim();
   if (!name) { document.getElementById('proj-name').focus(); return; }
   const checked = [...document.querySelectorAll('#proj-material-checkboxes input:checked')].map(c => c.value);
-  const proj = { id: Date.now()+'', name, desc: document.getElementById('proj-desc').value.trim(), materialIds: checked, created: new Date().toLocaleDateString(), createdBy: currentUser };
+  const proj = { id: Date.now()+'', name, desc: document.getElementById('proj-desc').value.trim(), materialIds: checked, created: new Date().toLocaleDateString(), createdBy: currentUser, driveLinks: [] };
+  proj.driveLinks = await uploadPendingFiles('proj-drive-links', 'projects/' + proj.id);
   await saveDoc('projects', proj.id, proj);
   closeModal('modal-add-project');
   document.getElementById('proj-name').value = '';
@@ -670,6 +689,7 @@ function renderProjects() {
       <div class="item-card-body" id="proj-${p.id}">
         ${p.desc ? `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">${p.desc}</div>` : ''}
         <div class="exp-section-label">Assigned materials</div>${rows}
+        ${renderDriveLinks(p.driveLinks)}
         <div class="action-row" style="margin-top:10px">
           <button class="btn-sm" onclick="editProjectMaterials('${p.id}')">Edit materials</button>
           <button class="btn-sm danger" onclick="deleteProject('${p.id}')">Delete</button>
@@ -693,11 +713,14 @@ window.addMaterial = async function() {
     arrival: document.getElementById('mat-arrival').value,
     expiry: document.getElementById('mat-expiry').value,
     notes: document.getElementById('mat-notes').value.trim(),
+    driveLinks: [],
     log: []
   };
+  mat.driveLinks = await uploadPendingFiles('mat-drive-links', 'materials/' + mat.id);
   await saveDoc('materials', mat.id, mat);
   closeModal('modal-add-material');
   ['mat-name','mat-stock','mat-unit','mat-low','mat-loc','mat-arrival','mat-expiry','mat-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mat-drive-links').innerHTML = '';
   await markChange(`Added material "${name}"`);
 };
 
@@ -737,6 +760,7 @@ function renderMaterials() {
         ${m.arrival ? `<div style="font-size:12px;color:var(--text3);margin-bottom:4px">Arrived: ${m.arrival}</div>` : ''}
         ${m.notes ? `<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${m.notes}</div>` : ''}
         ${logs ? `<div style="margin-bottom:10px"><div class="exp-section-label">Recent activity</div>${logs}</div>` : ''}
+        ${renderDriveLinks(m.driveLinks)}
         <div class="action-row">
           <button class="btn-sm primary" onclick="openUseMaterial('${m.id}')">Update stock</button>
           <button class="btn-sm danger" onclick="deleteMaterial('${m.id}')">Remove</button>
@@ -803,10 +827,12 @@ window.applyMaterialAction = async function() {
 window.addTissue = async function() {
   const name = document.getElementById('tis-name').value.trim();
   if (!name) { document.getElementById('tis-name').focus(); return; }
-  const tis = { id: Date.now()+'', name, type: document.getElementById('tis-type').value, qty: parseInt(document.getElementById('tis-qty').value)||1, freezer: document.getElementById('tis-freezer').value, shelf: document.getElementById('tis-shelf').value.trim(), date: document.getElementById('tis-date').value, notes: document.getElementById('tis-notes').value.trim() };
+  const tis = { id: Date.now()+'', name, type: document.getElementById('tis-type').value, qty: parseInt(document.getElementById('tis-qty').value)||1, freezer: document.getElementById('tis-freezer').value, shelf: document.getElementById('tis-shelf').value.trim(), date: document.getElementById('tis-date').value, notes: document.getElementById('tis-notes').value.trim(), driveLinks: [] };
+  tis.driveLinks = await uploadPendingFiles('tis-drive-links', 'tissues/' + tis.id);
   await saveDoc('tissues', tis.id, tis);
   closeModal('modal-add-tissue');
   ['tis-name','tis-qty','tis-shelf','tis-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('tis-drive-links').innerHTML = '';
   await markChange(`Added sample "${name}"`);
 };
 
@@ -837,6 +863,7 @@ function renderTissues() {
       <div class="item-card-body" id="tis-${s.id}">
         ${s.date?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">Frozen: ${s.date}</div>`:''}
         ${s.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${s.notes}</div>`:''}
+        ${renderDriveLinks(s.driveLinks)}
         <div class="action-row">
           <button class="btn-sm danger" onclick="decrementTissue('${s.id}')">Use 1 aliquot</button>
           <button class="btn-sm danger" onclick="deleteTissue('${s.id}')">Remove</button>
@@ -849,10 +876,12 @@ function renderTissues() {
 window.addCellLine = async function() {
   const name = document.getElementById('cl-name').value.trim();
   if (!name) { document.getElementById('cl-name').focus(); return; }
-  const cl = { id: Date.now()+'', name, passage: parseInt(document.getElementById('cl-passage').value)||0, vials: parseInt(document.getElementById('cl-vials').value)||0, frozen: document.getElementById('cl-frozen').value, location: document.getElementById('cl-loc').value.trim(), origin: document.getElementById('cl-origin').value.trim(), notes: document.getElementById('cl-notes').value.trim(), addedBy: currentUser };
+  const cl = { id: Date.now()+'', name, passage: parseInt(document.getElementById('cl-passage').value)||0, vials: parseInt(document.getElementById('cl-vials').value)||0, frozen: document.getElementById('cl-frozen').value, location: document.getElementById('cl-loc').value.trim(), origin: document.getElementById('cl-origin').value.trim(), notes: document.getElementById('cl-notes').value.trim(), addedBy: currentUser, driveLinks: [] };
+  cl.driveLinks = await uploadPendingFiles('cl-drive-links', 'celllines/' + cl.id);
   await saveDoc('celllines', cl.id, cl);
   closeModal('modal-add-cellline');
   ['cl-name','cl-passage','cl-vials','cl-frozen','cl-loc','cl-origin','cl-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cl-drive-links').innerHTML = '';
   await markChange(`Added cell line "${name}"`);
 };
 
@@ -880,6 +909,7 @@ function renderCellLines() {
           ${cl.origin?`<div><strong>Source:</strong> ${cl.origin}</div>`:''}
         </div>
         ${cl.notes?`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${cl.notes}</div>`:''}
+        ${renderDriveLinks(cl.driveLinks)}
         <div class="action-row">
           <button class="btn-sm" onclick="thawCellLine('${cl.id}')">Thaw 1 vial</button>
           <button class="btn-sm" onclick="passageCellLine('${cl.id}')">Passage +1</button>
@@ -925,6 +955,70 @@ function populateExpMaterialRows() {
   wrap.innerHTML = '';
 }
 
+// ── File upload system ────────────────────────────────────────────────────────
+// pendingFiles: { containerId -> [{ file, name }] }
+const pendingFiles = {};
+
+window.addDriveLinkRow = function(containerId) {
+  if (!pendingFiles[containerId]) pendingFiles[containerId] = [];
+  const wrap = document.getElementById(containerId);
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt';
+  input.multiple = true;
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  input.click();
+  input.onchange = () => {
+    [...input.files].forEach(file => {
+      pendingFiles[containerId].push({ file, name: file.name });
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:var(--radius-sm);padding:6px 10px;font-size:13px;';
+      row.dataset.filename = file.name;
+      row.innerHTML = `<span style="flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ${file.name}</span><span style="font-size:11px;color:var(--text3)">${(file.size/1024).toFixed(0)} KB</span><button type="button" onclick="removePendingFile('${containerId}','${file.name}',this.parentElement)" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;line-height:1">×</button>`;
+      wrap.appendChild(row);
+    });
+    document.body.removeChild(input);
+  };
+};
+
+window.removePendingFile = function(containerId, name, el) {
+  if (pendingFiles[containerId]) pendingFiles[containerId] = pendingFiles[containerId].filter(f => f.name !== name);
+  el.remove();
+};
+
+async function uploadPendingFiles(containerId, storagePath) {
+  const files = pendingFiles[containerId] || [];
+  if (files.length === 0) return [];
+  const results = [];
+  for (const {file, name} of files) {
+    const safeName = Date.now() + '_' + name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storageRef = ref(storage, `${storagePath}/${safeName}`);
+    await new Promise((resolve, reject) => {
+      const task = uploadBytesResumable(storageRef, file);
+      task.on('state_changed', null, reject, async () => {
+        const url = await getDownloadURL(task.snapshot.ref);
+        results.push({ name, url, path: `${storagePath}/${safeName}` });
+        resolve();
+      });
+    });
+  }
+  pendingFiles[containerId] = [];
+  document.getElementById(containerId).innerHTML = '';
+  return results;
+}
+
+function collectDriveLinks(containerId) { return []; } // kept for compatibility
+
+function renderDriveLinks(links) {
+  if (!links || links.length === 0) return '';
+  return `<div style="margin-top:8px"><div class="exp-section-label">📎 Attachments</div><div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">${links.map(l => {
+    const name = l.name || l;
+    const url = l.url || l;
+    return `<a href="${url}" target="_blank" rel="noopener" style="font-size:13px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:6px;padding:4px 0">📄 ${name}</a>`;
+  }).join('')}</div></div>`;
+}
+
 window.addExpMaterialRow = function() {
   const wrap = document.getElementById('exp-material-rows');
   const rowId = Date.now();
@@ -957,8 +1051,11 @@ window.addExperiment = async function() {
     protocol: document.getElementById('exp-protocol').value.trim(),
     result: document.getElementById('exp-result').value.trim(),
     next: document.getElementById('exp-next').value.trim(),
-    notes: document.getElementById('exp-notes').value.trim()
+    notes: document.getElementById('exp-notes').value.trim(),
+    driveLinks: collectDriveLinks('exp-drive-links')
   };
+  // Upload files first
+  exp.driveLinks = await uploadPendingFiles('exp-drive-links', 'experiments/' + exp.id);
   await saveDoc('experiments', exp.id, exp);
 
   // Auto-subtract materials from stock
@@ -977,6 +1074,7 @@ window.addExperiment = async function() {
   closeModal('modal-add-experiment');
   ['exp-title','exp-date','exp-user','exp-protocol','exp-result','exp-next','exp-notes'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('exp-material-rows').innerHTML = '';
+  document.getElementById('exp-drive-links').innerHTML = '';
   await markChange(`Logged experiment "${title}" — stock updated for ${matRows.length} material(s)`);
 };
 
@@ -984,10 +1082,23 @@ function renderExperiments() {
   const el = document.getElementById('experiments-list');
   if (!el) return;
   const filterUser = document.getElementById('exp-filter-user')?.value||'';
+  const filterProject = document.getElementById('exp-filter-project')?.value||'';
+  const sort = document.getElementById('exp-sort')?.value||'date-desc';
   const search = (document.getElementById('exp-filter-search')?.value||'').toLowerCase();
-  let exps = state.experiments;
+  let exps = [...state.experiments];
   if (filterUser) exps = exps.filter(e => e.user === filterUser);
+  if (filterProject) exps = exps.filter(e => e.projectId === filterProject);
   if (search) exps = exps.filter(e => e.title.toLowerCase().includes(search) || (e.protocol||'').toLowerCase().includes(search) || (e.result||'').toLowerCase().includes(search));
+  if (sort === 'date-desc') exps.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  else if (sort === 'date-asc') exps.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  else if (sort === 'user-asc') exps.sort((a,b) => (a.user||'').localeCompare(b.user||''));
+  else if (sort === 'project-asc') exps.sort((a,b) => (a.projectName||'').localeCompare(b.projectName||''));
+  // update project filter options
+  const projSel = document.getElementById('exp-filter-project');
+  if (projSel) {
+    const cur = projSel.value;
+    projSel.innerHTML = '<option value="">All projects</option>' + state.projects.map(p => `<option value="${p.id}"${p.id===cur?' selected':''}>${p.name}</option>`).join('');
+  }
   if (exps.length === 0) { el.innerHTML = '<div class="empty">No experiments found.</div>'; return; }
   el.innerHTML = exps.map(e => {
     const matList = (e.materials||[]).map(m => `<span class="tag">${m.name} ${m.amount} ${m.unit}</span>`).join('');
@@ -1005,6 +1116,7 @@ function renderExperiments() {
         ${e.result?`<div style="margin-bottom:10px"><div class="exp-section-label">Result</div><div class="result-box">${e.result}</div></div>`:''}
         ${e.next?`<div style="margin-bottom:10px"><div class="exp-section-label">Next steps</div><div style="font-size:13px;color:var(--text2);margin-top:4px">${e.next}</div></div>`:''}
         ${e.notes?`<div style="margin-bottom:10px"><div class="exp-section-label">Notes</div><div style="font-size:13px;color:var(--text2);margin-top:4px">${e.notes}</div></div>`:''}
+        ${renderDriveLinks(e.driveLinks)}
         <div class="action-row"><button class="btn-sm danger" onclick="deleteExperiment('${e.id}')">Delete</button></div>
       </div>
     </div>`;
