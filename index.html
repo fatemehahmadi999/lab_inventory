@@ -1426,24 +1426,35 @@ const pendingFiles = {};
 window.addDriveLinkRow = function(containerId) {
   if (!pendingFiles[containerId]) pendingFiles[containerId] = [];
   const wrap = document.getElementById(containerId);
+  // Create a visible file input that stays in the DOM
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt';
   input.multiple = true;
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  input.click();
-  input.onchange = () => {
+  input.style.cssText = 'font-size:13px;color:var(--text2);width:100%;';
+  input.addEventListener('change', () => {
     [...input.files].forEach(file => {
-      pendingFiles[containerId].push({ file, name: file.name });
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:var(--radius-sm);padding:6px 10px;font-size:13px;';
-      row.dataset.filename = file.name;
-      row.innerHTML = `<span style="flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ${file.name}</span><span style="font-size:11px;color:var(--text3)">${(file.size/1024).toFixed(0)} KB</span><button type="button" onclick="removePendingFile('${containerId}','${file.name}',this.parentElement)" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;line-height:1">×</button>`;
-      wrap.appendChild(row);
+      if (!pendingFiles[containerId]) pendingFiles[containerId] = [];
+      // avoid duplicates
+      if (!pendingFiles[containerId].find(f => f.name === file.name)) {
+        pendingFiles[containerId].push({ file, name: file.name });
+      }
     });
-    document.body.removeChild(input);
-  };
+    // Show selected files
+    const preview = row.querySelector('.file-preview');
+    if (preview) preview.remove();
+    const prev = document.createElement('div');
+    prev.className = 'file-preview';
+    prev.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+    prev.innerHTML = [...input.files].map(f =>
+      `<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:var(--radius-sm);padding:5px 10px;font-size:13px;color:var(--text2)">📄 ${f.name} <span style="color:var(--text3);font-size:11px">${(f.size/1024).toFixed(0)} KB</span></div>`
+    ).join('');
+    row.appendChild(prev);
+  });
+  row.appendChild(input);
+  wrap.appendChild(row);
 };
 
 window.removePendingFile = function(containerId, name, el) {
@@ -1493,6 +1504,7 @@ async function uploadPendingFiles(containerId, storagePath) {
   pendingFiles[containerId] = [];
   const el = document.getElementById(containerId);
   if (el) el.innerHTML = '';
+  console.log('Upload done, results:', results.length);
   console.log('Upload results:', results);
   if (results.length > 0) showToast(results.length + ' file(s) uploaded ✓');
   return results;
