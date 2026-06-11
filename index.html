@@ -273,7 +273,7 @@
     <div style="display:flex;flex-direction:column;gap:12px">
       <div class="field"><label>Project name</label><input type="text" id="proj-name" placeholder="e.g. PDX14 experiment" /></div>
       <div class="field"><label>Description (optional)</label><textarea id="proj-desc" placeholder="Brief notes..."></textarea></div>
-      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="proj-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('proj-drive-links')">＋ Attach file</button></div>
+      <div class="field"><label>📎 Attachments</label><div id="proj-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('proj-drive-links')">＋ Attach file</button></div>
       <div class="field">
         <label>Assign materials</label>
         <div id="proj-material-checkboxes" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;border:0.5px solid var(--border)"></div>
@@ -315,7 +315,7 @@
         <div class="field"><label>Expiration date</label><input type="date" id="mat-expiry" /></div>
       </div>
       <div class="field"><label>Notes (catalog #, supplier…)</label><textarea id="mat-notes" placeholder="Optional"></textarea></div>
-      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="mat-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('mat-drive-links')">＋ Attach file</button></div>
+      <div class="field"><label>📎 Attachments</label><div id="mat-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('mat-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-material')">Cancel</button>
@@ -348,7 +348,7 @@
       </div>
       <div class="field"><label>Date frozen</label><input type="date" id="tis-date" /></div>
       <div class="field"><label>Notes</label><textarea id="tis-notes" placeholder="Passage, condition, etc."></textarea></div>
-      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="tis-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('tis-drive-links')">＋ Attach file</button></div>
+      <div class="field"><label>📎 Attachments</label><div id="tis-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('tis-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-tissue')">Cancel</button>
@@ -373,7 +373,7 @@
       </div>
       <div class="field"><label>Origin / source</label><input type="text" id="cl-origin" placeholder="e.g. ATCC, in-house" /></div>
       <div class="field"><label>Notes (mycoplasma status, genotype…)</label><textarea id="cl-notes" placeholder="Optional"></textarea></div>
-      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="cl-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('cl-drive-links')">＋ Attach file</button></div>
+      <div class="field"><label>📎 Attachments</label><div id="cl-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('cl-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-cellline')">Cancel</button>
@@ -404,7 +404,7 @@
       <div class="field"><label>Result</label><textarea id="exp-result" placeholder="What happened? Key observations..."></textarea></div>
       <div class="field"><label>Next steps</label><textarea id="exp-next" placeholder="Follow-up actions, repeats needed..."></textarea></div>
       <div class="field"><label>Notes</label><textarea id="exp-notes" placeholder="Any other relevant info..."></textarea></div>
-      <div class="field"><label>📎 Attachments (Google Drive links)</label><div id="exp-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('exp-drive-links')">＋ Attach file</button></div>
+      <div class="field"><label>📎 Attachments</label><div id="exp-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('exp-drive-links')">＋ Attach file</button></div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-experiment')">Cancel</button>
