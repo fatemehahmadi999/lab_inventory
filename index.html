@@ -1081,6 +1081,7 @@ window.renderMaterials = function() {
         ${renderDriveLinks(m.driveLinks)}
         <div class="action-row">
           <button class="btn-sm primary" onclick="openUseMaterial('${m.id}')">Update stock</button>
+          <button class="btn-sm" onclick="editMaterial('${m.id}')">Edit</button>
           <button class="btn-sm danger" onclick="deleteMaterial('${m.id}')">Remove</button>
         </div>
       </div>
@@ -1149,6 +1150,7 @@ function renderTissues() {
         ${renderDriveLinks(s.driveLinks)}
         <div class="action-row">
           <button class="btn-sm danger" onclick="decrementTissue('${s.id}')">Use 1 aliquot</button>
+          <button class="btn-sm" onclick="editTissue('${s.id}')">Edit</button>
           <button class="btn-sm danger" onclick="deleteTissue('${s.id}')">Remove</button>
         </div>
       </div>
@@ -1254,6 +1256,7 @@ function renderCellLines() {
         <div class="action-row">
           <button class="btn-sm" onclick="thawCellLine('${cl.id}')">Thaw 1 vial</button>
           <button class="btn-sm" onclick="passageCellLine('${cl.id}')">Passage +1</button>
+          <button class="btn-sm" onclick="editCellLine('${cl.id}')">Edit</button>
           <button class="btn-sm danger" onclick="deleteCellLine('${cl.id}')">Remove</button>
         </div>
       </div>
@@ -1505,7 +1508,10 @@ window.renderExperiments = function() {
         ${e.notes?`<div style="margin-bottom:10px"><div class="exp-section-label">Notes</div><div style="font-size:13px;color:var(--text2);margin-top:4px">${e.notes}</div></div>`:''}
         ${e.activityLog&&e.activityLog.length?`<div style="margin-bottom:10px"><div class="exp-section-label">Recent activity</div>${e.activityLog.slice(0,3).map(l=>`<div class="log-entry"><span class="log-desc">${l.desc}</span><span class="log-meta">${l.ts} · ${l.user}</span></div>`).join('')}</div>`:''}
         ${renderDriveLinks(e.driveLinks)}
-        <div class="action-row"><button class="btn-sm danger" onclick="deleteExperiment('${e.id}')">Delete</button></div>
+        <div class="action-row">
+          <button class="btn-sm" onclick="editExperiment('${e.id}')">Edit</button>
+          <button class="btn-sm danger" onclick="deleteExperiment('${e.id}')">Delete</button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -1605,11 +1611,243 @@ window.renderPDXModels = function() {
         ${p.activityLog&&p.activityLog.length?`<div style="margin-bottom:10px"><div class="exp-section-label">Recent activity</div>${p.activityLog.slice(0,3).map(l=>`<div class="log-entry"><span class="log-desc">${l.desc}</span><span class="log-meta">${l.ts} · ${l.user}</span></div>`).join('')}</div>`:''}
         ${renderDriveLinks(p.driveLinks)}
         <div class="action-row">
+          <button class="btn-sm" onclick="editPDXModel('${p.id}')">Edit</button>
           <button class="btn-sm danger" onclick="deletePDXModel('${p.id}')">Delete</button>
         </div>
       </div>
     </div>`;
   }).join('');
+};
+
+// ── Edit functions ───────────────────────────────────────────────────────────
+
+window.editMaterial = function(id) {
+  const m = state.materials.find(x => x.id === id);
+  if (!m) return;
+  // Pre-fill form
+  document.getElementById('mat-name').value = m.name||'';
+  document.getElementById('mat-cat').value = m.category||'Antibody';
+  document.getElementById('mat-stock').value = m.stock||'';
+  document.getElementById('mat-unit').value = m.unit||'';
+  document.getElementById('mat-low').value = m.lowAt||'';
+  document.getElementById('mat-loc').value = m.location||'';
+  document.getElementById('mat-arrival').value = m.arrival||'';
+  document.getElementById('mat-expiry').value = m.expiry||'';
+  document.getElementById('mat-notes').value = m.notes||'';
+  // Trigger category-specific fields
+  toggleOther('mat-cat','mat-cat-other');
+  if (m.category === 'Reagent') {
+    document.getElementById('mat-company').value = m.company||'';
+    document.getElementById('mat-catalog').value = m.catalog||'';
+    document.getElementById('mat-size').value = m.size||'';
+    document.getElementById('mat-opened').value = m.opened||'';
+    document.getElementById('mat-link').value = m.link||'';
+    if (m.hazard) (Array.isArray(m.hazard)?m.hazard:[m.hazard]).forEach(h => {
+      const cb = document.querySelector(`#mat-hazard-wrap input[value="${h}"]`);
+      if (cb) cb.checked = true;
+    });
+  }
+  if (m.category === 'Primer') {
+    document.getElementById('mat-pri-orientation').value = m.priOrientation||'Forward';
+    document.getElementById('mat-pri-application').value = m.priApplication||'PCR';
+    document.getElementById('mat-pri-sequence').value = m.priSequence||'';
+    document.getElementById('mat-pri-stock-conc').value = m.priStockConc||'';
+    document.getElementById('mat-pri-work-conc').value = m.priWorkConc||'';
+    document.getElementById('mat-pri-tm').value = m.priTm||'';
+    document.getElementById('mat-pri-volume').value = m.priVolume||'';
+    document.getElementById('mat-pri-low').value = m.priLowAt||'';
+  }
+  if (m.category === 'Plasmid') {
+    document.getElementById('mat-pla-id').value = m.plaId||'';
+    document.getElementById('mat-pla-backbone').value = m.plaBackbone||'';
+    document.getElementById('mat-pla-vectype').value = m.plaVectype||'';
+    document.getElementById('mat-pla-insert').value = m.plaInsert||'';
+    document.getElementById('mat-pla-insert-size').value = m.plaInsertSize||'';
+    document.getElementById('mat-pla-promoter').value = m.plaPromoter||'';
+    document.getElementById('mat-pla-resistance').value = m.plaResistance||'';
+    document.getElementById('mat-pla-addgene-id').value = m.plaAddgeneId||'';
+    document.getElementById('mat-pla-from').value = m.plaFrom||'';
+    document.getElementById('mat-pla-link-addgene').value = m.plaLinkAddgene||'';
+    document.getElementById('mat-pla-link-benchling').value = m.plaLinkBenchling||'';
+    document.getElementById('mat-pla-celllines').value = m.plaCelllines||'';
+  }
+  openModal('modal-add-material');
+  const btn = document.querySelector('#modal-add-material .btn-primary');
+  btn.textContent = 'Save changes';
+  btn.onclick = async () => {
+    const cat = document.getElementById('mat-cat').value;
+    m.name = document.getElementById('mat-name').value.trim();
+    m.category = cat === 'Other' ? (document.getElementById('mat-cat-other').value.trim()||'Other') : cat;
+    m.stock = parseFloat(document.getElementById('mat-stock').value)||m.stock;
+    m.unit = document.getElementById('mat-unit').value.trim()||m.unit;
+    m.lowAt = parseFloat(document.getElementById('mat-low').value)||m.lowAt;
+    m.location = document.getElementById('mat-loc').value.trim();
+    m.arrival = document.getElementById('mat-arrival').value;
+    m.expiry = document.getElementById('mat-expiry').value;
+    m.notes = document.getElementById('mat-notes').value.trim();
+    if (cat === 'Reagent') {
+      m.company = document.getElementById('mat-company').value.trim();
+      m.catalog = document.getElementById('mat-catalog').value.trim();
+      m.size = document.getElementById('mat-size').value.trim();
+      m.opened = document.getElementById('mat-opened').value;
+      m.link = document.getElementById('mat-link').value.trim();
+      m.hazard = [...document.querySelectorAll('#mat-hazard-wrap input:checked')].map(i => i.value);
+    }
+    if (cat === 'Primer') {
+      m.priOrientation = document.getElementById('mat-pri-orientation').value;
+      m.priApplication = document.getElementById('mat-pri-application').value;
+      m.priSequence = document.getElementById('mat-pri-sequence').value.trim().toUpperCase();
+      m.priStockConc = parseFloat(document.getElementById('mat-pri-stock-conc').value)||0;
+      m.priWorkConc = parseFloat(document.getElementById('mat-pri-work-conc').value)||0;
+      m.priTm = parseFloat(document.getElementById('mat-pri-tm').value)||0;
+      m.priVolume = parseFloat(document.getElementById('mat-pri-volume').value)||0;
+      m.priLowAt = parseFloat(document.getElementById('mat-pri-low').value)||0;
+      m.stock = m.priVolume; m.unit = 'µL'; m.lowAt = m.priLowAt;
+    }
+    if (cat === 'Plasmid') {
+      m.plaId = document.getElementById('mat-pla-id').value.trim();
+      m.plaBackbone = document.getElementById('mat-pla-backbone').value.trim();
+      m.plaVectype = document.getElementById('mat-pla-vectype').value === 'Other' ? (document.getElementById('mat-pla-vectype-other').value.trim()||'Other') : document.getElementById('mat-pla-vectype').value;
+      m.plaInsert = document.getElementById('mat-pla-insert').value.trim();
+      m.plaInsertSize = parseFloat(document.getElementById('mat-pla-insert-size').value)||0;
+      m.plaPromoter = document.getElementById('mat-pla-promoter').value.trim();
+      m.plaResistance = document.getElementById('mat-pla-resistance').value.trim();
+      m.plaAddgeneId = document.getElementById('mat-pla-addgene-id').value.trim();
+      m.plaFrom = document.getElementById('mat-pla-from').value.trim();
+      m.plaLinkAddgene = document.getElementById('mat-pla-link-addgene').value.trim();
+      m.plaLinkBenchling = document.getElementById('mat-pla-link-benchling').value.trim();
+      m.plaCelllines = document.getElementById('mat-pla-celllines').value.trim();
+    }
+    await saveDoc('materials', m.id, m);
+    closeModal('modal-add-material');
+    btn.textContent = 'Add to inventory'; btn.onclick = window.addMaterial;
+    await markChange(`Updated material "${m.name}"`);
+  };
+};
+
+window.editExperiment = function(id) {
+  const e = state.experiments.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('exp-title').value = e.title||'';
+  document.getElementById('exp-date').value = e.date||'';
+  document.getElementById('exp-user').value = e.user||'';
+  document.getElementById('exp-protocol').value = e.protocol||'';
+  document.getElementById('exp-result').value = e.result||'';
+  document.getElementById('exp-next').value = e.next||'';
+  document.getElementById('exp-notes').value = e.notes||'';
+  populateExpProjectSelect();
+  document.getElementById('exp-project').value = e.projectId||'';
+  openModal('modal-add-experiment');
+  const btn = document.querySelector('#modal-add-experiment .btn-primary');
+  btn.textContent = 'Save changes';
+  btn.onclick = async () => {
+    e.title = document.getElementById('exp-title').value.trim();
+    e.date = document.getElementById('exp-date').value;
+    e.user = document.getElementById('exp-user').value.trim()||currentUser;
+    e.protocol = document.getElementById('exp-protocol').value.trim();
+    e.result = document.getElementById('exp-result').value.trim();
+    e.next = document.getElementById('exp-next').value.trim();
+    e.notes = document.getElementById('exp-notes').value.trim();
+    const projId = document.getElementById('exp-project').value;
+    e.projectId = projId;
+    e.projectName = projId ? (state.projects.find(p=>p.id===projId)||{}).name||'' : '';
+    await saveDoc('experiments', e.id, e);
+    closeModal('modal-add-experiment');
+    btn.textContent = 'Save experiment'; btn.onclick = window.addExperiment;
+    await markChange(`Updated experiment "${e.title}"`);
+  };
+};
+
+window.editTissue = function(id) {
+  const t = state.tissues.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tis-name').value = t.name||'';
+  document.getElementById('tis-type').value = t.type||'Tumor';
+  document.getElementById('tis-qty').value = t.qty||'';
+  document.getElementById('tis-freezer').value = t.freezer||'-80°C Freezer 1';
+  document.getElementById('tis-shelf').value = t.shelf||'';
+  document.getElementById('tis-date').value = t.date||'';
+  document.getElementById('tis-notes').value = t.notes||'';
+  openModal('modal-add-tissue');
+  const btn = document.querySelector('#modal-add-tissue .btn-primary');
+  btn.textContent = 'Save changes';
+  btn.onclick = async () => {
+    t.name = document.getElementById('tis-name').value.trim();
+    t.type = document.getElementById('tis-type').value === 'Other' ? (document.getElementById('tis-type-other').value.trim()||'Other') : document.getElementById('tis-type').value;
+    t.qty = parseInt(document.getElementById('tis-qty').value)||t.qty;
+    t.freezer = document.getElementById('tis-freezer').value;
+    t.shelf = document.getElementById('tis-shelf').value.trim();
+    t.date = document.getElementById('tis-date').value;
+    t.notes = document.getElementById('tis-notes').value.trim();
+    await saveDoc('tissues', t.id, t);
+    closeModal('modal-add-tissue');
+    btn.textContent = 'Save sample'; btn.onclick = window.addTissue;
+    await markChange(`Updated sample "${t.name}"`);
+  };
+};
+
+window.editCellLine = function(id) {
+  const cl = state.celllines.find(x => x.id === id);
+  if (!cl) return;
+  document.getElementById('cl-name').value = cl.name||'';
+  document.getElementById('cl-passage').value = cl.passage||'';
+  document.getElementById('cl-vials').value = cl.vials||'';
+  document.getElementById('cl-frozen').value = cl.frozen||'';
+  document.getElementById('cl-loc').value = cl.location||'';
+  document.getElementById('cl-origin').value = cl.origin||'';
+  document.getElementById('cl-notes').value = cl.notes||'';
+  openModal('modal-add-cellline');
+  const btn = document.querySelector('#modal-add-cellline .btn-primary');
+  btn.textContent = 'Save changes';
+  btn.onclick = async () => {
+    cl.name = document.getElementById('cl-name').value.trim();
+    cl.passage = parseInt(document.getElementById('cl-passage').value)||cl.passage;
+    cl.vials = parseInt(document.getElementById('cl-vials').value)||cl.vials;
+    cl.frozen = document.getElementById('cl-frozen').value;
+    cl.location = document.getElementById('cl-loc').value.trim();
+    cl.origin = document.getElementById('cl-origin').value.trim();
+    cl.notes = document.getElementById('cl-notes').value.trim();
+    await saveDoc('celllines', cl.id, cl);
+    closeModal('modal-add-cellline');
+    btn.textContent = 'Save cell line'; btn.onclick = window.addCellLine;
+    await markChange(`Updated cell line "${cl.name}"`);
+  };
+};
+
+window.editPDXModel = function(id) {
+  const p = state.pdxmodels.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('pdx-name').value = p.name||'';
+  document.getElementById('pdx-orig-name').value = p.origName||'';
+  document.getElementById('pdx-mice-ids').value = p.miceIds||'';
+  document.getElementById('pdx-mice-count').value = p.miceCount||'';
+  document.getElementById('pdx-year').value = p.year||'';
+  document.getElementById('pdx-location').value = p.location||'';
+  document.getElementById('pdx-notes').value = p.notes||'';
+  PDX_TISSUES.forEach(t => {
+    document.getElementById(`pdx-tis-${t}`).value = (p.tissues&&p.tissues[t])||'';
+  });
+  openModal('modal-add-pdx');
+  const btn = document.querySelector('#modal-add-pdx .btn-primary');
+  btn.textContent = 'Save changes';
+  btn.onclick = async () => {
+    p.name = document.getElementById('pdx-name').value.trim();
+    p.origName = document.getElementById('pdx-orig-name').value.trim();
+    p.miceIds = document.getElementById('pdx-mice-ids').value.trim();
+    p.miceCount = parseInt(document.getElementById('pdx-mice-count').value)||0;
+    p.year = document.getElementById('pdx-year').value.trim();
+    p.location = document.getElementById('pdx-location').value.trim();
+    p.notes = document.getElementById('pdx-notes').value.trim();
+    PDX_TISSUES.forEach(t => {
+      const val = parseInt(document.getElementById(`pdx-tis-${t}`).value)||0;
+      p.tissues = p.tissues||{};
+      if (val > 0) p.tissues[t] = val; else delete p.tissues[t];
+    });
+    await saveDoc('pdxmodels', p.id, p);
+    closeModal('modal-add-pdx');
+    btn.textContent = 'Save PDX model'; btn.onclick = window.addPDXModel;
+    await markChange(`Updated PDX model "${p.name}"`);
+  };
 };
 
 // ── Activity Log ──────────────────────────────────────────────────────────────
