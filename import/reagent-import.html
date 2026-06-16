@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reagent Importer → Lab Inventory</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#f7f6f2;--surface:#fff;--surface2:#f0efe9;--border:rgba(0,0,0,.1);--border-strong:rgba(0,0,0,.2);
+    --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;--accent:#0f6e56;--accent-light:#e1f5ee;--accent-text:#085041;
+    --danger:#a32d2d;--danger-light:#fcebeb;--warn:#854f0b;--warn-light:#faeeda;--radius:10px;--radius-sm:6px;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#1a1a18;--surface:#2c2c2a;--surface2:#3a3a38;--border:rgba(255,255,255,.1);--border-strong:rgba(255,255,255,.2);
+    --text:#f0efe9;--text2:#b4b2a9;--text3:#888780;--accent:#1d9e75;--accent-light:#04342c;--accent-text:#9fe1cb;
+    --danger:#f09595;--danger-light:#501313;--warn:#ef9f27;--warn-light:#412402;
+  }}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;padding:1.5rem;max-width:1100px;margin:0 auto}
+  h1{font-size:20px;font-weight:600;margin-bottom:4px}
+  .sub{color:var(--text2);font-size:13px;margin-bottom:1.25rem}
+  .card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+  .step-label{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem}
+  label.opt{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text2);margin-top:.5rem;cursor:pointer}
+  input[type=file]{font-size:14px}
+  input[type=checkbox]{width:auto}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:14px;font-weight:500;cursor:pointer}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.secondary{background:var(--surface2);color:var(--text2);border:.5px solid var(--border-strong)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:.75rem}
+  .stat{display:inline-flex;flex-direction:column;background:var(--surface2);border-radius:var(--radius-sm);padding:8px 14px;min-width:90px}
+  .stat b{font-size:18px}.stat span{font-size:11px;color:var(--text3)}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin:.5rem 0 1rem}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{text-align:left;padding:6px 8px;border-bottom:.5px solid var(--border);vertical-align:top}
+  th{position:sticky;top:0;background:var(--surface);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+  .tbl-wrap{max-height:460px;overflow:auto;border:.5px solid var(--border);border-radius:var(--radius-sm)}
+  .flag{color:var(--warn);font-weight:600}
+  .haz{color:var(--warn);font-size:11px}
+  .dup{opacity:.5}
+  .pill{font-size:10px;background:var(--warn-light);color:var(--warn);border-radius:4px;padding:1px 6px;margin-left:4px}
+  code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}
+  #log{font-family:monospace;font-size:12px;white-space:pre-wrap;background:var(--surface2);border-radius:var(--radius-sm);padding:10px;max-height:220px;overflow:auto;margin-top:.75rem}
+  .danger-note{color:var(--danger);font-size:13px;margin-top:.5rem}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<h1>Reagent Importer</h1>
+<div class="sub">Reads your reagents spreadsheet, maps it to the <code>materials</code> collection, lets you review, then writes to Firestore. Reagents only.</div>
+
+<div class="card">
+  <div class="step-label">Step 1 · Pick the file</div>
+  <input type="file" id="file" accept=".xlsx,.xls,.csv">
+  <label class="opt"><input type="checkbox" id="skipdup" checked> Skip rows that already exist in the inventory (matched on name + catalog #)</label>
+  <label class="opt"><input type="checkbox" id="instock" checked> Mark each reagent as <b style="margin:0 4px">stock 1 / "In stock"</b> (uncheck to import as stock 0)</label>
+  <div class="row"><button class="btn" id="parseBtn" disabled>Parse &amp; preview</button></div>
+</div>
+
+<div class="card" id="previewCard" style="display:none">
+  <div class="step-label">Step 2 · Review</div>
+  <div class="stats" id="stats"></div>
+  <div class="sub" id="flagNote"></div>
+  <div class="tbl-wrap"><table id="tbl"></table></div>
+  <div class="row">
+    <button class="btn" id="importBtn">Write to Firestore</button>
+    <span class="sub" id="importHint" style="margin:0"></span>
+  </div>
+  <div class="danger-note">This writes live data into <code>lab-inventory-9dddc</code>. There is no undo from here — review the table first.</div>
+  <div id="log" style="display:none"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── Same project as your app ──────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAGYqub8oApnvl3a-QcJ87WFy8BP-gMOuU",
+  authDomain: "lab-inventory-9dddc.firebaseapp.com",
+  projectId: "lab-inventory-9dddc",
+  storageBucket: "lab-inventory-9dddc.firebasestorage.app",
+  messagingSenderId: "780219827911",
+  appId: "1:780219827911:web:5478d206b094761eeb20e2"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── Load SheetJS (XLSX) from a working CDN, with fallbacks ─────────────────
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src=src; s.onload=res; s.onerror=()=>rej(new Error('failed '+src));
+    document.head.appendChild(s);
+  });
+}
+async function ensureXLSX(){
+  if(window.XLSX) return;
+  const cdns=[
+    'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+  ];
+  for(const u of cdns){
+    try{ await loadScript(u); if(window.XLSX) return; }catch(e){ /* try next */ }
+  }
+  throw new Error('Could not load the XLSX library from any CDN — check your internet connection.');
+}
+
+// ── Hazard vocabulary mapping (free text → your checkbox values) ───────────
+const HAZARD_MAP = {
+  'toxic':'Toxic','flammable':'Flammable','corrosive':'Corrosive',
+  'skin burns':'Corrosive','serious eye damage':'Corrosive',
+  'health hazard':'Health hazard','potential health hazard':'Health hazard',
+  'cmr':'Health hazard','aspiration hazard':'Health hazard',
+  'eye irritation':'Irritant','irritation':'Irritant','skin irritation':'Irritant',
+  'skin':'Irritant','may cause allergic skin reaction':'Irritant',
+  // pass-through canonicals (so they stay valid if already correct):
+  'oxidising':'Oxidising','irritant':'Irritant','environmental hazard':'Environmental hazard',
+  'explosive':'Explosive','compressed gas':'Compressed gas','radioactive':'Radioactive'
+};
+function mapHazards(v){
+  if(!v) return [];
+  const out=[];
+  String(v).split(',').forEach(tok=>{
+    const t=tok.trim(); if(!t) return;
+    const m=HAZARD_MAP[t.toLowerCase()];
+    out.push(m||t);                 // unknown tokens kept verbatim (nothing lost)
+  });
+  return [...new Set(out)];
+}
+
+// ── Date normalisation (Excel serial / common formats → ISO; else raw) ─────
+const EMPTY_TOKENS=new Set(['','?','/','-','leer','n/a','na']);
+function pad(n){return String(n).padStart(2,'0');}
+function isoFromExcel(serial){
+  // Excel epoch 1899-12-30, computed in UTC to avoid off-by-one
+  const ms=Date.UTC(1899,11,30)+Math.round(serial)*86400000;
+  const d=new Date(ms);
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`;
+}
+function normDate(v){
+  if(v===null||v===undefined) return '';
+  if(v instanceof Date) return `${v.getFullYear()}-${pad(v.getMonth()+1)}-${pad(v.getDate())}`;
+  if(typeof v==='number'){ return (v>30000&&v<60000)?isoFromExcel(v):String(v); }
+  let s=String(v).trim();
+  if(EMPTY_TOKENS.has(s.toLowerCase())) return '';
+  let m;
+  if((m=s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/))){            // DD.MM.YYYY or DD/MM/YYYY (European)
+    return `${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+  }
+  if((m=s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{2})$/))){            // DD.MM.YY or DD/MM/YY
+    return `20${m[3]}-${pad(m[2])}-${pad(m[1])}`;
+  }
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;                          // already ISO
+  return s;                                                           // partial / messy → keep raw for human review
+}
+
+// ── Header detection (robust to column reordering) ─────────────────────────
+function findCol(headers, ...names){
+  for(const n of names){
+    const i=headers.findIndex(h=>String(h||'').trim().toLowerCase()===n.toLowerCase());
+    if(i!==-1) return i;
+  }
+  return -1;
+}
+
+let records=[];          // transformed, ready to write
+let existing=new Set();  // name|catalog keys already in Firestore
+
+const $=id=>document.getElementById(id);
+const fileEl=$('file'), parseBtn=$('parseBtn'), importBtn=$('importBtn');
+fileEl.addEventListener('change',()=>{ parseBtn.disabled=!fileEl.files.length; });
+
+parseBtn.addEventListener('click', async ()=>{
+  const f=fileEl.files[0]; if(!f) return;
+  parseBtn.disabled=true; parseBtn.textContent='Parsing…';
+  try{
+    await ensureXLSX();
+    const isCsv=/\.csv$/i.test(f.name);
+    const wbOpts={cellDates:true};
+    let wb;
+    if(isCsv){ wb=XLSX.read(await f.text(),{type:'string',...wbOpts}); }
+    else{ wb=XLSX.read(new Uint8Array(await f.arrayBuffer()),{type:'array',...wbOpts}); }
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:null});
+
+    // find the header row (first row that contains a "Name" cell)
+    let h=aoa.findIndex(r=>r&&r.some(c=>String(c||'').trim().toLowerCase()==='name'));
+    if(h===-1) h=0;
+    const headers=aoa[h];
+    const c={
+      name:findCol(headers,'Name'),
+      notes:findCol(headers,'Notes'),
+      location:findCol(headers,'Location'),
+      hazard:findCol(headers,'Hazard'),
+      company:findCol(headers,'Company','Company / Supplier'),
+      catalog:findCol(headers,'Catalog number','Catalog','Cat #','Cat no'),
+      arrival:findCol(headers,'Delivery date','Arrival'),
+      opened:findCol(headers,'Date opened','Opened'),
+      expiry:findCol(headers,'Expiration date','Expiry','Expiration'),
+      size:findCol(headers,'Size','Size / Amount per unit'),
+      link:findCol(headers,'Link','Product link')
+    };
+    if(c.name===-1) throw new Error('No "Name" column found in the sheet.');
+
+    const g=(r,i)=> (i>=0&&i<r.length&&r[i]!=null) ? r[i] : '';
+    const txt=(r,i)=> String(g(r,i)).trim();
+    const inStock=$('instock').checked;
+
+    records=[];
+    for(let i=h+1;i<aoa.length;i++){
+      const r=aoa[i]||[];
+      const name=String(g(r,c.name)??'').replace(/\s+/g,' ').trim();
+      if(!name) continue;  // skip blank separator rows
+      records.push({
+        name,
+        category:'Reagent',
+        stock: inStock?1:0,
+        unit:'unit',
+        lowAt:0,
+        notes:txt(r,c.notes),
+        location:txt(r,c.location),
+        hazard:mapHazards(g(r,c.hazard)),
+        company:txt(r,c.company),
+        catalog:txt(r,c.catalog),
+        arrival:normDate(g(r,c.arrival)),
+        opened:normDate(g(r,c.opened)),
+        expiry:normDate(g(r,c.expiry)),
+        size:txt(r,c.size),
+        link:txt(r,c.link),
+        driveLinks:[],
+        log:[]
+      });
+    }
+
+    // pull existing materials for dedupe
+    existing=new Set();
+    try{
+      const snap=await getDocs(collection(db,'materials'));
+      snap.forEach(d=>{ const m=d.data(); existing.add(`${(m.name||'').toLowerCase()}|${(m.catalog||'').toLowerCase()}`); });
+    }catch(e){ console.warn('Could not read existing materials:',e); }
+
+    renderPreview();
+  }catch(err){
+    alert('Parse failed: '+err.message);
+    console.error(err);
+  }finally{
+    parseBtn.disabled=false; parseBtn.textContent='Parse & preview';
+  }
+});
+
+function dupKey(rec){ return `${rec.name.toLowerCase()}|${rec.catalog.toLowerCase()}`; }
+function isDup(rec){ return $('skipdup').checked && existing.has(dupKey(rec)); }
+function hasRawDate(rec){
+  return ['arrival','opened','expiry'].some(k=>rec[k] && !/^\d{4}-\d{2}-\d{2}$/.test(rec[k]));
+}
+
+function renderPreview(){
+  $('previewCard').style.display='block';
+  const dupCount=records.filter(isDup).length;
+  const toWrite=records.length-dupCount;
+  const flagged=records.filter(hasRawDate).length;
+
+  $('stats').innerHTML=`
+    <div class="stat"><b>${records.length}</b><span>rows parsed</span></div>
+    <div class="stat"><b>${toWrite}</b><span>will be written</span></div>
+    <div class="stat"><b>${dupCount}</b><span>skipped (dupes)</span></div>
+    <div class="stat"><b>${flagged}</b><span>raw dates to check</span></div>`;
+  $('flagNote').innerHTML = flagged
+    ? `<span class="flag">${flagged}</span> row(s) have a date that couldn't be auto-converted (kept as the original text). They're tagged below — fine to import, just won't drive the expiry badge until edited.`
+    : 'All dates converted cleanly.';
+
+  const cols=['name','company','catalog','location','size','hazard','arrival','opened','expiry'];
+  let html='<tr><th>#</th>'+cols.map(c=>`<th>${c}</th>`).join('')+'</tr>';
+  records.forEach((rec,i)=>{
+    const dup=isDup(rec);
+    html+=`<tr class="${dup?'dup':''}">`+
+      `<td>${i+1}${dup?'<span class="pill">dupe</span>':''}</td>`+
+      cols.map(col=>{
+        if(col==='hazard') return `<td class="haz">${rec.hazard.join(', ')}</td>`;
+        const v=rec[col]||'';
+        const raw=(['arrival','opened','expiry'].includes(col)&&v&&!/^\d{4}-\d{2}-\d{2}$/.test(v));
+        return `<td${raw?' class="flag"':''}>${String(v).replace(/</g,'&lt;')}${raw?' ⚠':''}</td>`;
+      }).join('')+'</tr>';
+  });
+  $('tbl').innerHTML=html;
+  $('importBtn').disabled = toWrite===0;
+  $('importHint').textContent = `${toWrite} document(s) ready.`;
+}
+['skipdup'].forEach(id=>$(id).addEventListener('change',()=>{ if(records.length) renderPreview(); }));
+
+importBtn.addEventListener('click', async ()=>{
+  const writeList=records.filter(r=>!isDup(r));
+  if(!writeList.length) return;
+  if(!confirm(`Write ${writeList.length} reagents to the live inventory?`)) return;
+  importBtn.disabled=true; importBtn.textContent='Writing…';
+  const logEl=$('log'); logEl.style.display='block'; logEl.textContent='';
+  const log=m=>{logEl.textContent+=m+'\n';logEl.scrollTop=logEl.scrollHeight;};
+  try{
+    const base=Date.now();
+    const batch=writeBatch(db);
+    writeList.forEach((rec,i)=>{
+      const id=String(base+i);
+      rec.id=id;
+      batch.set(doc(db,'materials',id),rec);
+    });
+    // activity-log entry, same shape your app uses
+    const ts=base+writeList.length;
+    batch.set(doc(db,'log',String(ts)),{
+      ts, tsStr:new Date().toLocaleString(), user:'Import script',
+      desc:`Imported ${writeList.length} reagents from spreadsheet`
+    });
+    log(`Committing ${writeList.length} reagents + 1 log entry…`);
+    await batch.commit();
+    log('✓ Done. Open your inventory — they should appear under Materials immediately.');
+    importBtn.textContent='Imported ✓';
+    writeList.forEach(r=>existing.add(dupKey(r)));  // so a re-run skips them
+  }catch(err){
+    log('✗ FAILED: '+err.message);
+    log('If this is a permissions error, your Firestore rules must allow writes to "materials".');
+    importBtn.disabled=false; importBtn.textContent='Write to Firestore';
+    console.error(err);
+  }
+});
+</script>
+</body>
+</html>
