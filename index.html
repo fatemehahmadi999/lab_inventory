@@ -212,6 +212,7 @@
       <button class="btn-add" onclick="openModal('modal-add-material')">＋ Add material</button>
     </div>
     <div class="filter-bar">
+      <input type="search" id="mat-search" placeholder="Search name, company, catalog, location, sequence…" oninput="renderMaterials()" style="flex:1;min-width:180px" />
       <select id="mat-filter-cat" onchange="renderMaterials()">
         <option value="">All categories</option>
         <option>Antibody</option><option>Reagent</option><option>Kit</option>
@@ -287,7 +288,14 @@
     <div style="display:flex;flex-direction:column;gap:12px">
       <div class="field"><label>Project name</label><input type="text" id="proj-name" placeholder="e.g. PDX14 experiment" /></div>
       <div class="field"><label>Description (optional)</label><textarea id="proj-desc" placeholder="Brief notes..."></textarea></div>
-      <div class="field"><label>📎 Attachments</label><div id="proj-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('proj-drive-links')">＋ Attach file</button></div>
+      <div class="field">
+        <label>📎 Attachments</label>
+        <div id="proj-drive-links" style="display:flex;flex-direction:column;gap:6px"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+          <span class="btn-sm" style="pointer-events:none">＋ Attach file</span>
+          <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt" style="display:none" onchange="handleFileInput(this,'proj-drive-links')">
+        </label>
+      </div>
       <div class="field">
         <label>Assign materials</label>
         <input type="text" id="proj-mat-search" placeholder="Search materials…" oninput="populateMaterialCheckboxes(this.value)" style="margin-bottom:6px;background:var(--surface2);border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 12px;font-size:14px;color:var(--text);width:100%;outline:none" />
@@ -438,6 +446,10 @@
           <div class="field"><label>Bacterial resistance</label><input type="text" id="mat-pla-resistance" placeholder="e.g. AmpR" /></div>
         </div>
         <div class="field-row">
+          <div class="field"><label>Selection marker</label><input type="text" id="mat-pla-selection" placeholder="e.g. Blasticidin, Puromycin" /></div>
+          <div class="field"><label>Concentration</label><input type="text" id="mat-pla-conc" placeholder="e.g. 86.7 ng/µL" /></div>
+        </div>
+        <div class="field-row">
           <div class="field"><label>AddGene ID</label><input type="text" id="mat-pla-addgene-id" placeholder="e.g. 12345" /></div>
           <div class="field"><label>Received from</label><input type="text" id="mat-pla-from" placeholder="e.g. Dr. Smith" /></div>
         </div>
@@ -448,7 +460,14 @@
         <div class="field"><label>Host cell lines</label><input type="text" id="mat-pla-celllines" placeholder="e.g. HEK293T, Jurkat" /></div>
       </div>
 
-      <div class="field"><label>📎 Attachments</label><div id="mat-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('mat-drive-links')">＋ Attach file</button></div>
+      <div class="field">
+        <label>📎 Attachments</label>
+        <div id="mat-drive-links" style="display:flex;flex-direction:column;gap:6px"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+          <span class="btn-sm" style="pointer-events:none">＋ Attach file</span>
+          <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt" style="display:none" onchange="handleFileInput(this,'mat-drive-links')">
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-material')">Cancel</button>
@@ -482,7 +501,14 @@
       </div>
       <div class="field"><label>Date frozen</label><input type="date" id="tis-date" /></div>
       <div class="field"><label>Notes</label><textarea id="tis-notes" placeholder="Passage, condition, etc."></textarea></div>
-      <div class="field"><label>📎 Attachments</label><div id="tis-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('tis-drive-links')">＋ Attach file</button></div>
+      <div class="field">
+        <label>📎 Attachments</label>
+        <div id="tis-drive-links" style="display:flex;flex-direction:column;gap:6px"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+          <span class="btn-sm" style="pointer-events:none">＋ Attach file</span>
+          <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt" style="display:none" onchange="handleFileInput(this,'tis-drive-links')">
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-tissue')">Cancel</button>
@@ -507,7 +533,14 @@
       </div>
       <div class="field"><label>Origin / source</label><input type="text" id="cl-origin" placeholder="e.g. ATCC, in-house" /></div>
       <div class="field"><label>Notes (mycoplasma status, genotype…)</label><textarea id="cl-notes" placeholder="Optional"></textarea></div>
-      <div class="field"><label>📎 Attachments</label><div id="cl-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('cl-drive-links')">＋ Attach file</button></div>
+      <div class="field">
+        <label>📎 Attachments</label>
+        <div id="cl-drive-links" style="display:flex;flex-direction:column;gap:6px"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+          <span class="btn-sm" style="pointer-events:none">＋ Attach file</span>
+          <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt" style="display:none" onchange="handleFileInput(this,'cl-drive-links')">
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-cellline')">Cancel</button>
@@ -575,7 +608,14 @@
         </div>
       </div>
       <div class="field"><label>Notes</label><textarea id="exp-notes" placeholder="Any other relevant info..."></textarea></div>
-      <div class="field"><label>📎 Attachments</label><div id="exp-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('exp-drive-links')">＋ Attach file</button></div>
+      <div class="field">
+        <label>📎 Attachments</label>
+        <div id="exp-drive-links" style="display:flex;flex-direction:column;gap:6px"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+          <span class="btn-sm" style="pointer-events:none">＋ Attach file</span>
+          <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt" style="display:none" onchange="handleFileInput(this,'exp-drive-links')">
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-experiment')">Cancel</button>
@@ -650,7 +690,14 @@
 
       <div class="sep"></div>
       <div class="field"><label>Comments / Notes</label><textarea id="pdx-notes" placeholder="Passage number, treatment history, any relevant notes…"></textarea></div>
-      <div class="field"><label>📎 Attachments</label><div id="pdx-drive-links" style="display:flex;flex-direction:column;gap:6px"></div><button type="button" class="btn-sm" style="margin-top:6px;width:fit-content" onclick="addDriveLinkRow('pdx-drive-links')">＋ Attach file</button></div>
+      <div class="field">
+        <label>📎 Attachments</label>
+        <div id="pdx-drive-links" style="display:flex;flex-direction:column;gap:6px"></div>
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+          <span class="btn-sm" style="pointer-events:none">＋ Attach file</span>
+          <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt" style="display:none" onchange="handleFileInput(this,'pdx-drive-links')">
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal('modal-add-pdx')">Cancel</button>
@@ -730,7 +777,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app, "gs://lab-inventory-9dddc.firebasestorage.app");
+const storage = getStorage(app);
 
 // ── Storage bucket ───────────────────────────────────────────────────────────
 // Remember to set Firebase Storage rules to: allow read, write: if true;
@@ -901,7 +948,24 @@ window.openModal = function(id) {
   if (id === 'modal-add-experiment') { populateExpProjectSelect(); populateExpMaterialRows(); populateExpPerformer(); }
   document.getElementById(id).style.display = 'flex';
 };
-window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; };
+window.closeModal = function(id) {
+  document.getElementById(id).style.display = 'none';
+  // Clear any pending files for this modal's attachment container
+  const modalToContainer = {
+    'modal-add-project': 'proj-drive-links',
+    'modal-add-material': 'mat-drive-links',
+    'modal-add-tissue': 'tis-drive-links',
+    'modal-add-cellline': 'cl-drive-links',
+    'modal-add-experiment': 'exp-drive-links',
+    'modal-add-pdx': 'pdx-drive-links',
+  };
+  const cid = modalToContainer[id];
+  if (cid) {
+    pendingFiles[cid] = [];
+    const wrap = document.getElementById(cid);
+    if (wrap) wrap.querySelectorAll('.pending-file-row').forEach(el => el.remove());
+  }
+};
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 function showToast(msg) {
@@ -910,6 +974,18 @@ function showToast(msg) {
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2200);
+}
+
+function showUploadError(msg) {
+  document.querySelectorAll('.upload-error-banner').forEach(el => el.remove());
+  const t = document.createElement('div');
+  t.className = 'upload-error-banner';
+  t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--danger);color:#fff;padding:12px 24px;border-radius:10px;font-size:13px;font-weight:500;z-index:300;max-width:90vw;text-align:center;cursor:pointer;';
+  t.textContent = msg;
+  t.title = 'Click to dismiss';
+  t.onclick = () => t.remove();
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 8000);
 }
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -1064,6 +1140,8 @@ window.addMaterial = async function() {
     plaInsertSize: parseFloat(document.getElementById('mat-pla-insert-size').value)||0,
     plaPromoter: document.getElementById('mat-pla-promoter').value.trim(),
     plaResistance: document.getElementById('mat-pla-resistance').value.trim(),
+    plaSelection: document.getElementById('mat-pla-selection').value.trim(),
+    plaConc: document.getElementById('mat-pla-conc').value.trim(),
     plaAddgeneId: document.getElementById('mat-pla-addgene-id').value.trim(),
     plaFrom: document.getElementById('mat-pla-from').value.trim(),
     plaLinkAddgene: document.getElementById('mat-pla-link-addgene').value.trim(),
@@ -1118,8 +1196,15 @@ window.renderMaterials = function() {
   const el = document.getElementById('materials-list');
   if (!el) return;
   const filterCat = document.getElementById('mat-filter-cat')?.value || '';
+  const term = (document.getElementById('mat-search')?.value || '').trim().toLowerCase();
   let mats = state.materials;
   if (filterCat) mats = mats.filter(m => m.category === filterCat);
+  if (term) mats = mats.filter(m => [
+    m.name, m.company, m.catalog, m.location, m.notes, m.size,
+    m.plaId, m.plaInsert, m.plaBackbone, m.plaPromoter, m.plaResistance, m.plaSelection, m.plaAddgeneId, m.plaCelllines, m.plaVectype,
+    m.priSequence, m.priOrientation, m.priApplication,
+    Array.isArray(m.hazard) ? m.hazard.join(' ') : m.hazard
+  ].filter(Boolean).join(' ').toLowerCase().includes(term));
   if (mats.length === 0) { el.innerHTML = '<div class="empty">No materials found.</div>'; return; }
   el.innerHTML = mats.map(m => {
     const logs = (m.log || []).slice(0,3).map(l =>
@@ -1147,13 +1232,15 @@ window.renderMaterials = function() {
           <div style="font-family:monospace;font-size:12px;word-break:break-all;letter-spacing:0.05em">${m.priSequence}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:4px">${m.priStockConc?'Stock: '+m.priStockConc+' µM':''} ${m.priWorkConc?'· Working: '+m.priWorkConc+' µM':''} ${m.priVolume?'· Vol: '+m.priVolume+' µL':''}</div>
         </div>` : ''}
-        ${m.category==='Plasmid'&&(m.plaBackbone||m.plaInsert)?`<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:8px;font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">
+        ${m.category==='Plasmid'&&(m.plaBackbone||m.plaInsert||m.plaId||m.plaResistance||m.plaConc||m.plaSelection||m.plaAddgeneId)?`<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:8px;font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px">
           ${m.plaId?`<div><span style="color:var(--text3)">ID:</span> ${m.plaId}</div>`:''}
           ${m.plaVectype?`<div><span style="color:var(--text3)">Type:</span> ${m.plaVectype}</div>`:''}
           ${m.plaBackbone?`<div><span style="color:var(--text3)">Backbone:</span> ${m.plaBackbone}</div>`:''}
           ${m.plaInsert?`<div><span style="color:var(--text3)">Insert:</span> ${m.plaInsert}${m.plaInsertSize?' ('+m.plaInsertSize+' bp)':''}</div>`:''}
           ${m.plaPromoter?`<div><span style="color:var(--text3)">Promoter:</span> ${m.plaPromoter}</div>`:''}
           ${m.plaResistance?`<div><span style="color:var(--text3)">Resistance:</span> ${m.plaResistance}</div>`:''}
+          ${m.plaSelection?`<div><span style="color:var(--text3)">Selection:</span> ${m.plaSelection}</div>`:''}
+          ${m.plaConc?`<div><span style="color:var(--text3)">Conc:</span> ${m.plaConc}</div>`:''}
           ${m.plaFrom?`<div><span style="color:var(--text3)">From:</span> ${m.plaFrom}</div>`:''}
           ${m.plaAddgeneId?`<div><span style="color:var(--text3)">AddGene:</span> ${m.plaAddgeneId}</div>`:''}
           ${m.plaLinkAddgene?`<div style="grid-column:1/-1"><a href="${m.plaLinkAddgene}" target="_blank" style="color:var(--accent);font-size:12px">🔗 AddGene</a></div>`:''}
@@ -1423,28 +1510,16 @@ window.toggleOther = function(selectId, inputId) {
 // pendingFiles: { containerId -> [{ file, name }] }
 const pendingFiles = {};
 
-window.addDriveLinkRow = function(containerId) {
+// Called directly from onchange on the <input type="file"> in each modal
+window.handleFileInput = function(input, containerId) {
   if (!pendingFiles[containerId]) pendingFiles[containerId] = [];
-  const wrap = document.getElementById(containerId);
-  // Hidden file input — we trigger it programmatically
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xlsx,.csv,.txt';
-  input.multiple = true;
-  input.style.display = 'none';
-  input.addEventListener('change', () => {
-    [...input.files].forEach(file => {
-      if (!pendingFiles[containerId]) pendingFiles[containerId] = [];
-      // avoid duplicates by name
-      if (!pendingFiles[containerId].find(f => f.name === file.name)) {
-        pendingFiles[containerId].push({ file, name: file.name });
-      }
-    });
-    renderPendingFiles(containerId);
-    input.value = ''; // reset so same file can be re-added after removal
+  [...input.files].forEach(file => {
+    if (!pendingFiles[containerId].find(f => f.name === file.name)) {
+      pendingFiles[containerId].push({ file, name: file.name });
+    }
   });
-  document.body.appendChild(input);
-  input.click();
+  input.value = ''; // reset so same file can be picked again after removal
+  renderPendingFiles(containerId);
 };
 
 function renderPendingFiles(containerId) {
@@ -1485,7 +1560,7 @@ async function uploadPendingFiles(containerId, storagePath) {
         const task = uploadBytesResumable(storageRef, file);
         task.on('state_changed',
           (snapshot) => console.log('Upload progress:', snapshot.bytesTransferred, '/', snapshot.totalBytes),
-          (err) => { console.error('Upload error:', err.code, err.message); showToast('Upload failed: ' + err.message); reject(err); },
+          (err) => { console.error('Upload error:', err.code, err.message); showUploadError('Upload failed: ' + err.code + ' — check Firebase Storage rules (must allow read, write: if true)'); reject(err); },
           async () => {
             console.log('Upload complete, getting URL...');
             try {
@@ -1823,6 +1898,8 @@ window.editMaterial = function(id) {
     document.getElementById('mat-pla-insert-size').value = m.plaInsertSize||'';
     document.getElementById('mat-pla-promoter').value = m.plaPromoter||'';
     document.getElementById('mat-pla-resistance').value = m.plaResistance||'';
+    document.getElementById('mat-pla-selection').value = m.plaSelection||'';
+    document.getElementById('mat-pla-conc').value = m.plaConc||'';
     document.getElementById('mat-pla-addgene-id').value = m.plaAddgeneId||'';
     document.getElementById('mat-pla-from').value = m.plaFrom||'';
     document.getElementById('mat-pla-link-addgene').value = m.plaLinkAddgene||'';
@@ -1870,6 +1947,8 @@ window.editMaterial = function(id) {
       m.plaInsertSize = parseFloat(document.getElementById('mat-pla-insert-size').value)||0;
       m.plaPromoter = document.getElementById('mat-pla-promoter').value.trim();
       m.plaResistance = document.getElementById('mat-pla-resistance').value.trim();
+      m.plaSelection = document.getElementById('mat-pla-selection').value.trim();
+      m.plaConc = document.getElementById('mat-pla-conc').value.trim();
       m.plaAddgeneId = document.getElementById('mat-pla-addgene-id').value.trim();
       m.plaFrom = document.getElementById('mat-pla-from').value.trim();
       m.plaLinkAddgene = document.getElementById('mat-pla-link-addgene').value.trim();
