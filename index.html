@@ -692,6 +692,7 @@
       <div class="field"><label>Project (optional)</label>
         <select id="exp-project"><option value="">— none —</option></select>
       </div>
+      <div class="field"><label>Aim of the experiment</label><textarea id="exp-aim" placeholder="What is this experiment intended to test or achieve?"></textarea></div>
       <div class="field">
         <label>Items used <span style="font-weight:400;color:var(--text3)">— reserved from inventory when the draft is saved</span></label>
         <div id="exp-material-rows" style="display:flex;flex-direction:column;gap:6px"></div>
@@ -2226,6 +2227,7 @@ function renderExperimentFinalizationReview(exp) {
       ${reviewField('Current status', 'Draft')}
       ${reviewField('Items selected', String(items.length))}
     </div>
+    ${reviewTextSection('Aim of the experiment', exp.aim)}
     <div class="exp-review-section"><div class="exp-review-section-title">Items used</div><div class="exp-review-section-body">${itemRows}</div></div>
     ${reviewTextSection('Protocol / method', exp.protocol, { rich:true })}
     ${reviewTextSection('Result', exp.result, { rich:true })}
@@ -2413,7 +2415,7 @@ async function commitExperimentReservation(expData, previousReservedItems, { del
 }
 
 function resetExperimentModal() {
-  ['exp-title','exp-date','exp-user','exp-notes','exp-item-search'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['exp-title','exp-date','exp-user','exp-aim','exp-notes','exp-item-search'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   ['exp-protocol','exp-result','exp-next'].forEach(id => window.rteClear(id));
   document.getElementById('exp-material-rows').innerHTML = '';
   document.getElementById('exp-drive-links').innerHTML = '';
@@ -2448,6 +2450,7 @@ window.addExperiment = async function() {
     user: document.getElementById('exp-user').value.trim() || currentUser,
     projectId: projId,
     projectName: projId ? (state.projects.find(p=>p.id===projId)||{}).name || '' : '',
+    aim: document.getElementById('exp-aim').value.trim(),
     items, status:'draft', stockReserved:true, reservedItems:items.map(i=>({...i})), consumed:[],
     protocol: window.rteGet('exp-protocol'), result: window.rteGet('exp-result'), next: window.rteGet('exp-next'),
     notes: document.getElementById('exp-notes').value.trim(), driveLinks:[], createdAt:Date.now()
@@ -2477,7 +2480,7 @@ window.renderExperiments = function() {
   let exps = [...state.experiments];
   if (filterUser) exps = exps.filter(e => e.user === filterUser);
   if (filterProject) exps = exps.filter(e => e.projectId === filterProject);
-  if (search) exps = exps.filter(e => [e.title,e.protocol,e.result,e.notes,e.projectName].filter(Boolean).join(' ').toLowerCase().includes(search));
+  if (search) exps = exps.filter(e => [e.title,e.aim,e.protocol,e.result,e.next,e.notes,e.projectName].filter(Boolean).join(' ').toLowerCase().includes(search));
   if (sort === 'date-desc') exps.sort((a,b) => (b.date||'').localeCompare(a.date||'') || Number(b.createdAt||0)-Number(a.createdAt||0));
   else if (sort === 'date-asc') exps.sort((a,b) => (a.date||'').localeCompare(b.date||''));
   else if (sort === 'user-asc') exps.sort((a,b) => (a.user||'').localeCompare(b.user||''));
@@ -2502,6 +2505,7 @@ window.renderExperiments = function() {
       </div>
       <div class="item-card-body" id="exp-${escHtml(e.id)}">
         ${legacyUnreserved?'<div style="background:var(--warn-light);color:var(--warn);padding:8px 10px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:10px">Older draft: its stock has not been reserved yet. Edit and save it once to reserve the listed items.</div>':''}
+        ${e.aim?`<div style="margin-bottom:10px"><div class="exp-section-label">Aim</div><div style="font-size:13px;color:var(--text2);margin-top:4px;line-height:1.6;white-space:pre-wrap">${escHtml(e.aim)}</div></div>`:''}
         ${itemList?`<div style="margin-bottom:10px"><div class="exp-section-label">Items used ${reserved.length?'(reserved from stock)':'(not reserved)'}</div><div style="margin-top:4px">${itemList}</div></div>`:''}
         ${e.protocol?`<div style="margin-bottom:10px"><div class="exp-section-label">Protocol</div><div style="font-size:13px;color:var(--text2);margin-top:4px;line-height:1.6">${e.protocol}</div></div>`:''}
         ${e.result?`<div style="margin-bottom:10px"><div class="exp-section-label">Result</div><div class="result-box" style="line-height:1.6">${e.result}</div></div>`:''}
@@ -2858,6 +2862,7 @@ window.editExperiment = function(id) {
   document.getElementById('exp-title').value = e.title || '';
   document.getElementById('exp-date').value = e.date || '';
   document.getElementById('exp-user').value = e.user || '';
+  document.getElementById('exp-aim').value = e.aim || '';
   document.getElementById('exp-item-search').value = '';
   window.rteSet('exp-protocol', e.protocol || '');
   window.rteSet('exp-result', e.result || '');
@@ -2884,6 +2889,7 @@ window.editExperiment = function(id) {
       user: document.getElementById('exp-user').value.trim() || currentUser,
       projectId: projId,
       projectName: projId ? (state.projects.find(p=>p.id===projId)||{}).name || '' : '',
+      aim: document.getElementById('exp-aim').value.trim(),
       items,
       status:e.status || 'draft',
       stockReserved:true,
